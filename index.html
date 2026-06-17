@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Live Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        @keyframes marquee {
+            0% { transform: translate3d(100%, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+        .animate-ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 25s linear infinite;
+        }
+        .live-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(0.95); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white font-sans min-h-screen pb-20">
+
+    <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4">
+        <div class="bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl max-w-md w-full text-center">
+            <h1 class="text-2xl font-black text-emerald-500 mb-2 uppercase tracking-wide">⚽ Arena Live</h1>
+            <p class="text-slate-400 text-xs mb-6">Enter password to access match transmission</p>
+            <input type="password" id="gate-password" placeholder="Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-emerald-500">
+            <button onclick="checkGatePassword()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl transition-all">Access Dashboard</button>
+            <p id="gate-error" class="text-red-500 text-xs mt-3 hidden">⚠️ Incorrect password.</p>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden">
+        
+        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
+                <span class="text-xl">🏆</span>
+                <h1 class="text-md font-black tracking-wider text-slate-100">ARENA LIVE</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs font-mono text-emerald-400">
+                    SGT: <span id="gmt-clock">00:00:00</span>
+                </div>
+                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden">← Home</button>
+                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-950 hover:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-amber-400">ADMIN</button>
+            </div>
+        </header>
+
+        <main id="page-home" class="max-w-7xl mx-auto p-6 view-page space-y-12">
+            <div>
+                <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300 mb-4">Live Match Feeds</h2>
+                <div id="streams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-900 pb-2">
+                    <h3 class="text-lg font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-red-500 live-pulse"></span> Global Match Scores
+                    </h3>
+                    <button onclick="fetchLiveScores()" class="bg-slate-900 hover:bg-slate-800 text-xs font-bold px-3 py-1 rounded-lg border border-slate-800">🔄 Refresh</button>
+                </div>
+                
+                <div id="scores-loading" class="text-center py-10 text-slate-600 text-xs font-mono uppercase">Fetching match data stream...</div>
+                <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
+                    </div>
+            </div>
+        </main>
+
+        <main id="page-player" class="max-w-5xl mx-auto p-6 view-page hidden">
+            <div class="bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                <div class="aspect-video w-full bg-black">
+                    <video id="video-element" class="w-full h-full" controls autoplay playsinline></video>
+                </div>
+                <div class="p-4 bg-slate-950 flex items-center justify-between">
+                    <div>
+                        <h2 id="player-title" class="text-md font-bold text-white">Stream</h2>
+                        <span id="player-quality" class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded uppercase mt-1 inline-block">HD</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-admin" class="max-w-xl mx-auto p-6 view-page hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                
+                <div>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">📢 Update Ticker Ribbon</h2>
+                    <div class="flex gap-2">
+                        <input type="text" id="admin-ticker-input" placeholder="Enter marquee text..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
+                        <button onclick="updateTickerText()" class="bg-amber-500 text-black font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider">Save</button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800">
+
+                <div>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3">🛠️ Publish Live Stream Channel</h2>
+                    <div class="space-y-3">
+                        <input type="text" id="stream-title" placeholder="Stream Title (e.g., Caze TV)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
+                        <select id="stream-quality" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
+                            <option value="1080p HD">1080p HD</option>
+                            <option value="720p SD">720p SD</option>
+                            <option value="4K UHD">4K UHD</option>
+                        </select>
+                        <input type="text" id="stream-url" placeholder="M3U8 Stream URL" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-mono text-white focus:outline-none">
+                        <button onclick="addStream()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider text-white">Publish Broadcast</button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800">
+
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Active Channels</h3>
+                    <div id="admin-streams-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+        </main>
+
+        <div class="fixed bottom-0 left-0 right-0 h-10 bg-slate-950 border-t border-slate-800 flex items-center overflow-hidden z-40">
+            <div class="bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider px-3 h-full flex items-center whitespace-nowrap">
+                📢 ALERT
+            </div>
+            <div class="w-full overflow-hidden flex items-center bg-slate-900 h-full">
+                <div id="live-ticker-text" class="animate-ticker text-xs font-medium text-amber-400 uppercase tracking-wide">
+                    Syncing with database core...
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SUPABASE_CONFIG = {
+            url: "https://cjsngpngbgomdzovzteq.supabase.co",
+            anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc25ncG5nYmdvbWR6b3Z6dGVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2ODg1NTcsImV4cCI6MjA5NzI2NDU1N30.zj0IDkiaxyRnMwIg2Uk1AaphLRfHA8UwPd7_WFJK47s"
+        };
+
+        const APP_CONFIG = { gatePassword: "football123", adminPassword: "admin123" };
+        let activeHlsInstance = null;
+
+        function checkGatePassword() {
+            if (document.getElementById('gate-password').value === APP_CONFIG.gatePassword) {
+                document.getElementById('gate-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                initDashboard();
+            } else {
+                showElementError('gate-error');
+            }
+        }
+
+        function promptAdminLogin() {
+            if (!document.getElementById('page-admin').classList.contains('hidden')) {
+                showPage('home'); return;
+            }
+            if (prompt("Enter Admin Password:") === APP_CONFIG.adminPassword) {
+                showPage('admin');
+            } else {
+                alert("Incorrect Password.");
+            }
+        }
+
+        function updateGMT8Clock() {
+            const now = new Date();
+            document.getElementById('gmt-clock').innerText = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            }).format(now);
+        }
+        setInterval(updateGMT8Clock, 1000);
+
+        function showPage(pageId) {
+            if (pageId !== 'player') destroyVideoPlayer();
+            document.querySelectorAll('.view-page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+
+            const btnHome = document.getElementById('btn-home');
+            const btnAdmin = document.getElementById('btn-admin-trigger');
+            if (pageId === 'home') {
+                btnHome.classList.add('hidden');
+                btnAdmin.innerText = "ADMIN";
+            } else {
+                btnHome.classList.remove('hidden');
+                if (pageId === 'admin') btnAdmin.innerText = "EXIT ADMIN";
+            }
+        }
+
+        function initDashboard() {
+            updateGMT8Clock();
+            fetchTickerText();
+            fetchStreams();
+            fetchLiveScores();
+            setInterval(fetchLiveScores, 60000);
+            setInterval(fetchTickerText, 15000);
+        }
+
+        // MATCH CARD SCORES TELEMETRY LOADER
+        async function fetchLiveScores() {
+            const loader = document.getElementById('scores-loading');
+            const container = document.getElementById('scores-container');
+            try {
+                const res = await fetch('https://www.scorebat.com/video-api/v3/feed/');
+                const data = await res.json();
+                
+                loader.classList.add('hidden');
+                container.classList.remove('hidden');
+                container.innerHTML = '';
+
+                const fixtures = data && data.response ? data.response.slice(0, 12) : [];
+                if (fixtures.length === 0) {
+                    container.innerHTML = `<div class="col-span-full text-center py-6 text-slate-500 text-xs">No active match schedules found.</div>`;
+                    return;
+                }
+
+                fixtures.forEach(match => {
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500/30 transition shadow-lg relative overflow-hidden";
+                    
+                    const rawTitle = match.title || "Team A - Team B";
+                    const teamParts = rawTitle.includes(" - ") ? rawTitle.split(" - ") : [rawTitle, "Away Team"];
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center justify-between text-[10px] font-mono mb-3">
+                                <span class="text-slate-500 max-w-[180px] truncate uppercase tracking-wider">${match.competition || "MATCH UPDATE"}</span>
+                                <span class="text-red-400 font-bold px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 rounded text-[9px] live-pulse">LIVE</span>
+                            </div>
+                            <div class="text-xs font-bold text-slate-200 flex items-center justify-center gap-1.5 py-1 text-center">
+                                <span class="bg-slate-950 px-2 py-1.5 rounded-lg flex-1 truncate">${teamParts[0]}</span>
+                                <span class="text-amber-400 text-[10px] font-black select-none">VS</span>
+                                <span class="bg-slate-950 px-2 py-1.5 rounded-lg flex-1 truncate">${teamParts[1]}</span>
+                            </div>
+                        </div>
+                        <div class="pt-3 mt-3 border-t border-slate-950 flex items-center justify-between">
+                            <span class="text-[9px] text-slate-600 uppercase font-mono">Telemetry Active</span>
+                            <a href="${match.matchviewUrl}" target="_blank" class="text-[10px] text-amber-400 hover:underline tracking-wider font-bold uppercase">
+                                View Match ↗
+                            </a>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) { 
+                loader.classList.remove('hidden');
+                loader.innerText = "Global scoreboard connection dormant.";
+            }
+        }
+
+        // DATABASE OPERATIONS DIRECTLY TIED TO STRICT SQL TABLE MAPPINGS
+        async function fetchTickerText() {
+            try {
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/settings?id=eq.global`, {
+                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
+                });
+                const data = await response.json();
+                if(data && data[0]) {
+                    document.getElementById('live-ticker-text').innerText = data[0].ticker_text || "Matchday Central Node Active";
+                    if(document.getElementById('page-admin').classList.contains('hidden')) {
+                        document.getElementById('admin-ticker-input').value = data[0].ticker_text || "";
+                    }
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function updateTickerText() {
+            const text = document.getElementById('admin-ticker-input').value.trim();
+            if(!text) return;
+            try {
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/settings?id=eq.global`, {
+                    method: 'PATCH',
+                    headers: { 
+                        "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ ticker_text: text })
+                });
+                if(response.ok) {
+                    document.getElementById('live-ticker-text').innerText = text;
+                    alert("Ticker saved!");
+                }
+            } catch(err) { alert("Write transaction rejected."); }
+        }
+
+        async function fetchStreams() {
+            try {
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?select=*`, {
+                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
+                });
+                const streams = await response.json();
+                renderDashboardStreams(streams);
+                renderAdminStreams(streams);
+            } catch (err) { console.error(err); }
+        }
+
+        async function addStream() {
+            const title = document.getElementById('stream-title').value.trim();
+            const quality = document.getElementById('stream-quality').value;
+            const url = document.getElementById('stream-url').value.trim();
+
+            if (!title || !url) return alert("All parameters must be completed.");
+
+            // Directly matches the clean SQL layout definitions (title, quality, url)
+            const cleanStreamData = { title: title, quality: quality, url: url };
+
+            try {
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams`, {
+                    method: 'POST',
+                    headers: { 
+                        "apikey": SUPABASE_CONFIG.anonKey, 
+                        "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`,
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify(cleanStreamData)
+                });
+                
+                if (response.ok || response.status === 201) {
+                    document.getElementById('stream-title').value = '';
+                    document.getElementById('stream-url').value = '';
+                    fetchStreams();
+                    alert("Channel broadcast deployed!");
+                } else {
+                    const failLog = await response.text();
+                    alert("Database rejected submit action: " + failLog);
+                }
+            } catch(err) { alert("Transaction connection dropped."); }
+        }
+
+        async function deleteStream(id) {
+            if(!confirm("Remove channel?")) return;
+            try {
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
+                });
+                if(response.ok) fetchStreams();
+            } catch(err) { alert("Delete transaction failed."); }
+        }
+
+        function renderDashboardStreams(dataArray) {
+            const container = document.getElementById('streams-grid');
+            container.innerHTML = '';
+            if (!dataArray || dataArray.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-600 text-xs font-mono uppercase">No channels active in registry.</div>`;
+                return;
+            }
+            dataArray.forEach(stream => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-amber-500/20 transition p-4 flex flex-col justify-between group";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1.5">
+                                <span class="w-1 h-1 rounded-full bg-emerald-400"></span> Live Feed
+                            </span>
+                            <span class="bg-slate-950 text-slate-500 border border-slate-800 text-[9px] font-bold px-2 py-0.5 rounded">${stream.quality || "HD"}</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mb-4 truncate">${stream.title || "Live Channel"}</h3>
+                    </div>
+                    <button onclick="launchStream('${encodeURIComponent(stream.url || '')}', '${encodeURIComponent(stream.title || '')}', '${stream.quality || 'HD'}')" class="w-full bg-slate-950 border border-slate-800 group-hover:bg-amber-500 text-slate-400 group-hover:text-black font-bold py-2 rounded-lg transition text-[10px] tracking-wider uppercase">Launch Stream</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderAdminStreams(dataArray) {
+            const container = document.getElementById('admin-streams-list');
+            container.innerHTML = '';
+            if(!dataArray || dataArray.length === 0) return;
+            dataArray.forEach(stream => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs";
+                item.innerHTML = `
+                    <div class="truncate pr-4 text-slate-300 font-medium">
+                        <span class="text-amber-400 font-bold mr-1">[${stream.quality || "HD"}]</span> ${stream.title || "Live Channel"}
+                    </div>
+                    <button onclick="deleteStream(${stream.id})" class="text-red-500 font-bold px-2 py-1 text-[11px] bg-red-500/5 rounded border border-red-500/10">Delete</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function launchStream(url, title, quality) {
+            showPage('player');
+            document.getElementById('player-title').innerText = decodeURIComponent(title);
+            document.getElementById('player-quality').innerText = quality;
+            
+            const video = document.getElementById('video-element');
+            const targetUrl = decodeURIComponent(url);
+
+            if (Hls.isSupported()) {
+                activeHlsInstance = new Hls({ maxBufferSize: 20 * 1024 * 1024 });
+                activeHlsInstance.loadSource(targetUrl);
+                activeHlsInstance.attachMedia(video);
+                activeHlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = targetUrl;
+                video.play().catch(()=>{});
+            }
+        }
+
+        function destroyVideoPlayer() {
+            const video = document.getElementById('video-element');
+            if (activeHlsInstance) { activeHlsInstance.destroy(); activeHlsInstance = null; }
+            if (video) { video.pause(); video.src = ""; video.load(); }
+        }
+
+        function showElementError(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+    </script>
+</body>
+</html>
