@@ -82,8 +82,8 @@
                     <h2 id="stage-match-title" class="text-2xl font-black uppercase tracking-wide text-white drop-shadow-md">COUNTRY 1 <span class="text-blue-500">VS</span> COUNTRY 2</h2>
                 </div>
 
-                <button id="stage-launch-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg">
-                    Launch Main Feed Transmissions ↗
+                <button id="stage-launch-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer">
+                    Watch Pre-Match Coverage ↗
                 </button>
             </div>
         </main>
@@ -141,7 +141,7 @@
         let activeHls = null;
         let cachedMatchesStore = [];
 
-        // Comprehensive lookup table to convert standard naming systems into correct ISO-A2 codes safely
+        // ISO-A2 Code Country Dictionary
         const countryCodes = {
             "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
             "bahamas": "bs", "bahrain": "bh", "bangladesh": "bd", "barbados": "bb", "belarus": "by", "belgium": "be", "belize": "bz", "benin": "bj", "bhutan": "bt", "bolivia": "bo",
@@ -236,7 +236,6 @@
             } catch (err) { console.error(err); }
         }
 
-        // EVALUATE CURRENT TIMELINE CHRONOLOGY ALWAYS SELECTION NEXT CLOSEST
         function evaluateActiveTimelineState() {
             if (!cachedMatchesStore || cachedMatchesStore.length === 0) {
                 document.getElementById('no-active-stage').classList.remove('hidden');
@@ -248,7 +247,7 @@
             let displayTargetMatch = null;
             let isLiveCurrently = false;
 
-            // Look for a live match running inside a 2.5 hour schedule block window
+            // 1. Look for a live match running inside its 2.5 hour schedule block window
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
                 const matchDurationLimit = mTime + (2.5 * 60 * 60 * 1000);
@@ -260,7 +259,7 @@
                 }
             }
 
-            // If no match is live, find the absolute nearest upcoming future scheduled item
+            // 2. If no match is active, grab the absolute nearest future scheduled item
             if (!displayTargetMatch) {
                 for (let i = 0; i < cachedMatchesStore.length; i++) {
                     const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
@@ -271,7 +270,7 @@
                 }
             }
 
-            // Fallback: If ALL matches are finished, stick to the absolute last completed match instead of blanking out
+            // 3. Fallback: If ALL scheduled items are in the past, fall back to the most recently completed match
             if (!displayTargetMatch && cachedMatchesStore.length > 0) {
                 displayTargetMatch = cachedMatchesStore[cachedMatchesStore.length - 1];
             }
@@ -290,35 +289,35 @@
                 document.getElementById('name-away').innerText = c2;
                 document.getElementById('stage-match-title').innerHTML = `${c1} <span class="text-blue-500">VS</span> ${c2}`;
                 
-                // Mount new Flag URL assets mapping
                 document.getElementById('flag-home').src = getFlagUrl(c1);
                 document.getElementById('flag-away').src = getFlagUrl(c2);
 
                 const badgePill = document.getElementById('display-status-pill');
                 const badgeText = document.getElementById('display-status-text');
                 const countdownWrap = document.getElementById('countdown-wrap');
+                const actionBtn = document.getElementById('stage-launch-btn');
                 const formattedKickoff = new Date(displayTargetMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+                // Bind the stream launch trigger directly to the event payload url
+                actionBtn.onclick = () => {
+                    bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title);
+                };
+
                 if (isLiveCurrently) {
-                    // Match is active
+                    // Match is active right now
                     badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-red-500/5 border border-red-500/20 text-red-400 px-3 py-1 rounded-full flex items-center gap-1.5 live-pulse";
                     badgeText.innerText = "● TRANSMISSION ACTIVE";
                     document.getElementById('display-time-tag').innerText = `STARTED AT ${formattedKickoff} SGT`;
                     countdownWrap.classList.add('hidden');
                     
-                    document.getElementById('stage-launch-btn').disabled = false;
-                    document.getElementById('stage-launch-btn').className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
-                    document.getElementById('stage-launch-btn').innerText = "Launch Main Feed Transmissions ↗";
-                    document.getElementById('stage-launch-btn').onclick = () => {
-                        bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title);
-                    };
+                    actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                    actionBtn.innerText = "Watch Live Transmission ↗";
                 } else {
-                    // Match is upcoming or concluded
                     const targetKickoffTime = new Date(displayTargetMatch.start_time).getTime();
                     const diff = targetKickoffTime - now;
 
                     if (diff > 0) {
-                        // Upcoming match countdown execution tracking block
+                        // Match is upcoming (Button is unlocked for pre-match media/studio feeds!)
                         badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-amber-500/5 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full flex items-center gap-1.5";
                         badgeText.innerText = "UPCOMING MATCH STAGE";
                         document.getElementById('display-time-tag').innerText = `KICKOFF AT ${formattedKickoff} SGT`;
@@ -330,18 +329,17 @@
                         document.getElementById('countdown-timer').innerText = 
                             `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-                        document.getElementById('stage-launch-btn').disabled = true;
-                        document.getElementById('stage-launch-btn').className = "w-full bg-slate-800 text-slate-500 border border-slate-700/50 font-black py-4 rounded-2xl text-xs tracking-widest uppercase cursor-not-allowed";
-                        document.getElementById('stage-launch-btn').innerText = "Feed Standby Mode (Locked)";
+                        actionBtn.className = "w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                        actionBtn.innerText = "Watch Pre-Match Coverage ↗";
                     } else {
                         // Concluded configuration setup fallback
                         badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-slate-950 border border-slate-800 text-slate-500 px-3 py-1 rounded-full flex items-center gap-1.5";
                         badgeText.innerText = "MATCH CONCLUDED";
                         document.getElementById('display-time-tag').innerText = "FULL TIME";
                         countdownWrap.classList.add('hidden');
-                        document.getElementById('stage-launch-btn').disabled = true;
-                        document.getElementById('stage-launch-btn').className = "w-full bg-slate-800 text-slate-500 border border-slate-700/50 font-black py-4 rounded-2xl text-xs tracking-widest uppercase cursor-not-allowed";
-                        document.getElementById('stage-launch-btn').innerText = "Transmission Offline";
+                        
+                        actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                        actionBtn.innerText = "Watch Match Replay Feed ↗";
                     }
                 }
             } else {
