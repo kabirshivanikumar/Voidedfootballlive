@@ -4,16 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arena Live World Cup Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Space Grotesk"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .live-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(0.98); } }
         
         .fade-view {
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(12px);
         }
         .fade-view.view-active {
             opacity: 1;
@@ -31,9 +47,8 @@
             stroke-dashoffset: 600;
             animation: drawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.4s;
         }
-        @keyframes drawLine {
-            to { stroke-dashoffset: 0; }
-        }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        
         .stadium-glow {
             opacity: 0;
             animation: beaconGlow 2s ease-in-out forwards 1.8s;
@@ -43,260 +58,155 @@
             50% { opacity: 0.8; filter: drop-shadow(0 0 25px rgba(59,130,246,0.6)); }
             100% { opacity: 1; filter: drop-shadow(0 0 15px rgba(59,130,246,0.3)); }
         }
-        .stadium-flare {
-            transform: scale(0);
-            animation: beamFlare 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 2.2s;
-        }
-        @keyframes beamFlare {
-            to { transform: scale(1); }
-        }
-
-        /* --- TROPHY MATCH OPEN ANIMATIONS --- */
-        .trophy-rise {
-            transform: translateY(120px) scale(0.4);
-            opacity: 0;
-            animation: riseUp 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.3s;
-        }
-        @keyframes riseUp {
-            0% { transform: translateY(120px) scale(0.4); opacity: 0; filter: brightness(0.5); }
-            60% { opacity: 1; filter: brightness(1.2); }
-            100% { transform: translateY(0) scale(1); opacity: 1; filter: brightness(1); }
-        }
-        .aura-spin {
-            transform-origin: center;
-            animation: spinRing 8s linear infinite;
-        }
-        @keyframes spinRing {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .beam-shimmer {
-            animation: shimmer 3s ease-in-out infinite alternate;
-        }
-        @keyframes shimmer {
-            0% { opacity: 0.2; }
-            100% { opacity: 0.7; }
-        }
+        
+        /* Custom scrollbar styling for high-end feel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(71, 85, 105, 1); }
     </style>
 </head>
-<body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600 relative">
+<body class="bg-[#030712] text-slate-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600/30 selection:text-blue-200 relative antialiased tracking-tight">
 
-    <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4 transition-all duration-500">
-        <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl max-w-md w-full text-center transform scale-100 transition-all">
-            <div class="w-16 h-16 bg-gradient-to-tr from-amber-600 to-yellow-400 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-amber-600/20">⚽</div>
-            <h1 class="text-2xl font-black text-slate-100 tracking-wider uppercase">Arena World Cup Studio</h1>
-            <p class="text-slate-400 text-xs mt-1 mb-6">Enter secure access code to unlock your streaming portal</p>
-            <input type="password" id="gate-password" value="football123" placeholder="Access Password" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500 transition-all focus:ring-2 focus:ring-amber-500/10">
-            <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-amber-600/10 tracking-wide uppercase text-xs">Authorize Entry</button>
+    <div id="gate-screen" class="fixed inset-0 bg-[#030712] flex flex-col items-center justify-center z-50 px-4 transition-all duration-500">
+        <div class="bg-slate-900/40 backdrop-blur-2xl p-10 rounded-[32px] border border-slate-800/60 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7)] max-w-md w-full text-center border-t-slate-700/30">
+            <div class="w-20 h-20 bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-500 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl shadow-amber-600/20 ring-4 ring-amber-500/10">⚽</div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">Arena Studio</h1>
+            <p class="text-slate-400 text-xs mt-1.5 mb-8 font-medium">Enter production passkey to unlock the match pipeline</p>
+            <input type="password" id="gate-password" value="football123" placeholder="Access Password" class="w-full bg-slate-950/60 border border-slate-800/80 rounded-2xl px-5 py-4 text-center text-white font-medium mb-4 focus:outline-none focus:border-blue-500 transition-all focus:ring-4 focus:ring-blue-500/10 placeholder-slate-600">
+            <button onclick="checkGatePassword()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-blue-600/20 tracking-wide text-xs uppercase">Authorize Studio Hub</button>
         </div>
     </div>
 
-    <div id="intro-overlay" class="fixed inset-0 bg-slate-950 z-40 hidden flex flex-col items-center justify-center transition-opacity duration-700 pointer-events-none">
+    <div id="intro-overlay" class="fixed inset-0 bg-[#030712] z-40 hidden flex flex-col items-center justify-center transition-opacity duration-700 pointer-events-none">
         <div class="w-full max-w-xl px-6 relative flex flex-col items-center">
             <svg viewBox="0 0 800 400" class="w-full h-auto opacity-90">
-                <g stroke="rgba(30, 41, 59, 0.5)" stroke-width="1">
-                    <line x1="0" y1="100" x2="800" y2="100" />
-                    <line x1="0" y1="200" x2="800" y2="200" />
-                    <line x1="0" y1="300" x2="800" y2="300" />
-                    <line x1="200" y1="0" x2="200" y2="400" />
-                    <line x1="400" y1="0" x2="400" y2="400" />
-                    <line x1="600" y1="0" x2="600" y2="400" />
+                <g stroke="rgba(30, 41, 59, 0.4)" stroke-width="1">
+                    <line x1="0" y1="100" x2="800" y2="100" /><line x1="0" y1="200" x2="800" y2="200" /><line x1="0" y1="300" x2="800" y2="300" />
                 </g>
-                <ellipse cx="400" cy="320" rx="260" ry="40" fill="none" stroke="#1e293b" stroke-width="2" />
-                <ellipse cx="400" cy="320" rx="220" ry="30" fill="none" stroke="rgba(59, 130, 246, 0.2)" stroke-width="1" />
-                <path d="M 120,280 C 120,120 680,120 680,280" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" class="sketch-line" />
-                <path d="M 100,290 C 100,90 700,90 700,290" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5,5" class="sketch-line" />
+                <path d="M 120,280 C 120,120 680,120 680,280" fill="none" stroke="#2563eb" stroke-width="2.5" class="sketch-line" />
                 <path d="M 170,295 C 170,160 630,160 630,295" fill="none" stroke="#1d4ed8" stroke-width="2" class="sketch-line-fast" />
-                <path d="M 220,305 C 220,200 580,200 580,305" fill="none" stroke="#1e40af" stroke-width="1.5" class="sketch-line-fast" />
-                <line x1="180" y1="210" x2="160" y2="293" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
-                <line x1="270" y1="160" x2="250" y2="305" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
-                <line x1="400" y1="140" x2="400" y2="310" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,4" class="sketch-line" />
-                <line x1="530" y1="160" x2="550" y2="305" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
-                <line x1="620" y1="210" x2="640" y2="293" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
-                <path d="M 120,195 Q 400,120 680,195" fill="none" stroke="#60a5fa" stroke-width="3" class="sketch-line" />
                 <g class="stadium-glow">
-                    <polygon points="150,180 0,0 80,0" fill="url(#lightGradient)" opacity="0.35" />
-                    <polygon points="650,180 800,0 720,0" fill="url(#lightGradient)" opacity="0.35" />
-                    <ellipse cx="400" cy="240" rx="180" ry="70" fill="url(#centerWash)" opacity="0.15" />
+                    <polygon points="150,180 0,0 80,0" fill="url(#lightGradient)" opacity="0.25" />
+                    <polygon points="650,180 800,0 720,0" fill="url(#lightGradient)" opacity="0.25" />
                 </g>
-                <circle cx="150" cy="180" r="5" fill="#f59e0b" class="stadium-flare" />
-                <circle cx="650" cy="180" r="5" fill="#f59e0b" class="stadium-flare" />
                 <defs>
                     <linearGradient id="lightGradient" x1="0" y1="1" x2="0" y2="0">
-                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
-                        <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
-                    </linearGradient>
-                    <radialGradient id="centerWash" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.8"/>
-                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <div class="mt-4 text-center">
-                <h3 class="text-[10px] font-mono tracking-[0.3em] uppercase text-blue-400 font-bold animate-pulse">Loading Arena Studio...</h3>
-            </div>
-        </div>
-    </div>
-
-    <div id="match-launch-overlay" class="fixed inset-0 bg-slate-950 z-50 hidden opacity-0 transition-opacity duration-700 flex flex-col items-center justify-center pointer-events-none">
-        <div class="w-full max-w-2xl px-6 flex flex-col items-center relative">
-            <svg viewBox="0 0 600 600" class="w-full max-w-[450px] h-auto">
-                <g stroke="rgba(245, 158, 11, 0.15)" stroke-width="1.5">
-                    <circle cx="300" cy="480" r="140" fill="none" stroke-dasharray="4,4" class="aura-spin"/>
-                    <circle cx="300" cy="480" r="190" fill="none" class="aura-spin" style="animation-direction: reverse; animation-duration: 12s;"/>
-                    <ellipse cx="300" cy="480" rx="240" ry="40" fill="none" stroke="rgba(245,158,11,0.3)" stroke-width="2"/>
-                </g>
-
-                <g class="beam-shimmer">
-                    <polygon points="300,100 220,480 380,480" fill="url(#trophyBeam)" opacity="0.3" />
-                </g>
-
-                <g class="trophy-rise">
-                    <path d="M 260,470 Q 300,475 340,470 L 345,485 Q 300,492 255,485 Z" fill="#d97706"/>
-                    <path d="M 265,455 Q 300,460 335,455 L 340,470 Q 300,475 260,470 Z" fill="#f59e0b"/>
-                    <path d="M 270,442 Q 300,446 330,442 L 335,455 Q 300,460 265,455 Z" fill="#10b981"/>
-                    <path d="M 273,430 Q 300,434 327,430 L 330,442 Q 300,446 270,442 Z" fill="#f59e0b"/>
-                    <path d="M 275,418 Q 300,422 325,418 L 327,430 Q 300,434 273,430 Z" fill="#10b981"/>
-
-                    <path d="M 275,418 Q 300,410 325,418 L 335,320 Q 300,340 265,320 Z" fill="url(#goldGrad)"/>
-                    
-                    <path d="M 265,320 C 250,290 260,250 280,230 C 290,245 295,270 285,290 Z" fill="#b45309"/>
-                    <path d="M 335,320 C 350,290 340,250 320,230 C 310,245 305,270 315,290 Z" fill="#b45309"/>
-
-                    <circle cx="300" cy="210" r="45" fill="url(#goldGrad)" stroke="#f59e0b" stroke-width="1"/>
-                    <path d="M 270,200 Q 290,190 310,225 M 315,185 Q 330,205 340,195 M 280,225 Q 300,235 325,220" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"/>
-                </g>
-
-                <defs>
-                    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#fbbf24"/>
-                        <stop offset="50%" stop-color="#f59e0b"/>
-                        <stop offset="100%" stop-color="#b45309"/>
-                    </linearGradient>
-                    <linearGradient id="trophyBeam" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0"/>
-                        <stop offset="70%" stop-color="#fbbf24" stop-opacity="0.4"/>
-                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/><stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
                     </linearGradient>
                 </defs>
             </svg>
-            <div class="text-center -mt-4">
-                <h2 id="launch-overlay-title" class="text-2xl font-black uppercase tracking-widest text-amber-400">CONNECTING TO STAGE</h2>
-                <p class="text-slate-400 text-xs mt-1 uppercase tracking-wide">Preparing live broadcast presentation</p>
+            <div class="mt-6 text-center">
+                <h3 class="text-[10px] font-mono tracking-[0.4em] uppercase text-blue-500 font-bold animate-pulse">Initializing Broadcast Matrices...</h3>
             </div>
         </div>
     </div>
 
     <div id="main-app" class="opacity-0 transition-opacity duration-500 flex flex-col min-h-screen">
         
-        <header class="bg-slate-900/60 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shadow-md sticky top-0 z-40">
-            <div class="flex items-center gap-3 cursor-pointer group" onclick="showPage('home')">
-                <span class="text-xl transition-transform group-hover:scale-125">🏆</span>
-                <h1 class="text-xs font-black tracking-widest text-slate-300 uppercase group-hover:text-white transition-colors">Arena Broadcast Engine</h1>
+        <header class="bg-[#030712]/70 backdrop-blur-xl border-b border-slate-900 px-8 py-5 flex items-center justify-between sticky top-0 z-40">
+            <div class="flex items-center gap-3.5 cursor-pointer group" onclick="showPage('home')">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-sm shadow-md shadow-blue-500/10">🏆</div>
+                <h1 class="text-xs font-bold tracking-[0.2em] text-slate-400 uppercase group-hover:text-white transition-colors">Arena Broadcast Engine</h1>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] font-mono text-amber-400 shadow-inner">
+                <div class="bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800 text-xs font-mono text-blue-400 font-medium shadow-inner">
                     SGT: <span id="sng-clock">00:00:00</span>
                 </div>
-                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden transition-colors">← Hub</button>
-                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-950 hover:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-800 text-blue-400 uppercase transition-all active:scale-95">Settings</button>
+                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden transition-colors px-3 py-2 bg-slate-900 rounded-xl border border-slate-800">← Hub</button>
+                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-900 hover:bg-slate-800/80 text-xs font-bold px-4 py-2 rounded-xl border border-slate-800 text-slate-300 uppercase transition-all active:scale-95">Settings</button>
             </div>
         </header>
 
-        <div class="flex-1 relative flex flex-col justify-center">
+        <div class="flex-1 relative flex flex-col justify-center py-12 px-6">
             
-            <main id="page-home-empty" class="fade-view absolute inset-x-0 mx-auto max-w-md text-center p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-xl hidden">
+            <main id="page-home-empty" class="fade-view absolute inset-x-0 mx-auto max-w-md text-center p-10 bg-slate-900/40 border border-slate-800 rounded-[32px] hidden">
                 <span class="text-4xl block mb-4">💤</span>
-                <h2 class="text-sm font-black uppercase tracking-wider text-slate-300">Timeline Empty</h2>
-                <p class="text-slate-500 text-xs mt-1">Access the settings terminal to schedule your upcoming matches.</p>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Timeline Empty</h2>
+                <p class="text-slate-500 text-xs mt-1.5">Configure schedules inside your manager panel terminal.</p>
             </main>
 
-            <main id="page-home" class="fade-view max-w-4xl mx-auto p-6 w-full hidden">
-                <div class="bg-slate-900 border-2 border-slate-800 rounded-[32px] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950/40 group">
+            <main id="page-home" class="fade-view max-w-4xl mx-auto w-full hidden">
+                <div class="bg-slate-900/30 border border-slate-800/80 rounded-[40px] p-10 flex flex-col justify-between shadow-2xl relative overflow-hidden backdrop-blur-xl">
                     
-                    <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/10 blur-[80px] rounded-full pointer-events-none"></div>
-                    <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div class="absolute -top-32 -left-32 w-64 h-64 bg-blue-600/5 blur-[120px] rounded-full pointer-events-none"></div>
+                    <div class="absolute -bottom-32 -right-32 w-64 h-64 bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
-                    <div class="flex items-center justify-between border-b border-slate-800/60 pb-5 mb-6">
-                        <span id="display-status-pill" class="font-bold tracking-widest text-[10px] uppercase border px-3 py-1 rounded-full flex items-center gap-1.5 transition-all duration-300">
+                    <div class="flex items-center justify-between border-b border-slate-800/60 pb-6 mb-8">
+                        <span id="display-status-pill" class="font-bold tracking-widest text-[9px] uppercase border px-3.5 py-1.5 rounded-xl flex items-center gap-2 transition-all duration-300">
                             <span class="w-1.5 h-1.5 rounded-full bg-current"></span> <span id="display-status-text">SCHEDULING ACTIVE</span>
                         </span>
-                        <span id="display-time-tag" class="text-slate-400 font-black font-mono text-xs bg-slate-950 border border-slate-800 px-3 py-1 rounded-xl shadow-inner">00:00 SGT</span>
+                        <span id="display-time-tag" class="text-slate-400 font-bold font-mono text-xs bg-slate-950/60 border border-slate-800 px-3.5 py-1.5 rounded-xl">00:00 SGT</span>
                     </div>
 
-                    <div id="countdown-wrap" class="w-full text-center mb-4 hidden transform transition-transform">
-                        <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 block mb-1">Match Countdown</span>
-                        <span id="countdown-timer" class="font-mono text-4xl font-black text-amber-400 tracking-wider bg-slate-950/80 px-6 py-2.5 rounded-2xl border border-slate-800 inline-block shadow-lg">00:00:00</span>
+                    <div id="countdown-wrap" class="w-full text-center mb-6 hidden">
+                        <span id="countdown-label" class="text-[9px] font-mono uppercase tracking-[0.25em] text-slate-500 block mb-2">STREAM RUNTIME</span>
+                        <span id="countdown-timer" class="font-mono text-5xl font-bold text-white tracking-tight bg-slate-950/40 px-8 py-4 rounded-3xl border border-slate-800 inline-block shadow-2xl backdrop-blur-md">00:00:00</span>
                     </div>
 
                     <div class="flex items-center justify-center gap-8 md:gap-16 py-6">
-                        <div class="flex flex-col items-center gap-3 flex-1 transform transition-all duration-500 hover:scale-105">
-                            <div class="w-32 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 shadow-xl flex items-center justify-center relative">
-                                <img id="flag-home" src="" class="w-full h-full object-cover hidden transition-opacity duration-300" onload="this.classList.remove('hidden')">
+                        <div class="flex flex-col items-center gap-4 flex-1">
+                            <div class="w-28 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 shadow-xl flex items-center justify-center">
+                                <img id="flag-home" src="" class="w-full h-full object-cover hidden" onload="this.classList.remove('hidden')">
                             </div>
-                            <span id="name-home" class="text-xs font-black tracking-wider text-center text-slate-400 uppercase truncate max-w-[150px] mt-1">Country A</span>
+                            <span id="name-home" class="text-xs font-bold tracking-wider text-slate-400 uppercase truncate max-w-[140px]">Country A</span>
                         </div>
 
-                        <div class="text-amber-500 font-black text-xs uppercase tracking-widest bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800 shadow-inner select-none">VS</div>
+                        <div class="text-slate-600 font-bold text-xs uppercase tracking-widest bg-slate-900 border border-slate-800 w-12 h-12 flex items-center justify-center rounded-2xl select-none font-mono">VS</div>
 
-                        <div class="flex flex-col items-center gap-3 flex-1 transform transition-all duration-500 hover:scale-105">
-                            <div class="w-32 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 shadow-xl flex items-center justify-center relative">
-                                <img id="flag-away" src="" class="w-full h-full object-cover hidden transition-opacity duration-300" onload="this.classList.remove('hidden')">
+                        <div class="flex flex-col items-center gap-4 flex-1">
+                            <div class="w-28 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 shadow-xl flex items-center justify-center">
+                                <img id="flag-away" src="" class="w-full h-full object-cover hidden" onload="this.classList.remove('hidden')">
                             </div>
-                            <span id="name-away" class="text-xs font-black tracking-wider text-center text-slate-400 uppercase truncate max-w-[150px] mt-1">Country B</span>
+                            <span id="name-away" class="text-xs font-bold tracking-wider text-slate-400 uppercase truncate max-w-[140px]">Country B</span>
                         </div>
                     </div>
 
-                    <div class="text-center mt-6 mb-8">
-                        <h2 id="stage-match-title" class="text-3xl font-black uppercase tracking-wide text-white drop-shadow-lg transition-all duration-300">COUNTRY 1 <span class="text-blue-500">VS</span> COUNTRY 2</h2>
+                    <div class="text-center mt-6 mb-10">
+                        <h2 id="stage-match-title" class="text-3xl font-extrabold uppercase tracking-tight text-white">COUNTRY 1 <span class="text-blue-500 font-mono font-medium mx-1">vs</span> COUNTRY 2</h2>
                     </div>
 
-                    <button id="stage-launch-btn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20">
+                    <button id="stage-launch-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-xl shadow-blue-600/10 active:scale-[0.99]">
                         Watch Transmission Feed ↗
                     </button>
                 </div>
             </main>
 
-            <main id="page-player" class="fade-view max-w-5xl mx-auto p-6 w-full hidden">
-                <div class="bg-slate-900 rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl">
-                    <div class="aspect-video w-full bg-black relative">
+            <main id="page-player" class="fade-view max-w-5xl mx-auto w-full hidden">
+                <div class="bg-slate-900/60 rounded-[40px] overflow-hidden border border-slate-800 shadow-2xl backdrop-blur-xl p-4">
+                    <div class="aspect-video w-full bg-black rounded-[28px] overflow-hidden relative border border-slate-950 shadow-inner">
                         <video id="video-element" class="w-full h-full" controls autoplay playsinline></video>
                     </div>
-                    <div class="p-5 bg-slate-950 border-t border-slate-900 flex items-center justify-between">
+                    <div class="px-6 py-5 flex items-center justify-between">
                         <div>
-                            <h2 id="player-title" class="text-sm font-bold text-white uppercase tracking-wide">Live Match Stream</h2>
-                            <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2 py-0.5 border border-emerald-500/20 rounded-md uppercase mt-1 inline-block tracking-widest">Active Feed</span>
+                            <h2 id="player-title" class="text-xs font-bold text-white uppercase tracking-wider">Live Match Stream</h2>
+                            <span class="bg-emerald-500/10 text-emerald-400 text-[9px] font-bold px-2.5 py-1 border border-emerald-500/20 rounded-lg uppercase mt-2 inline-block tracking-widest live-pulse">Feed Connected</span>
                         </div>
                     </div>
                 </div>
             </main>
 
-            <main id="page-admin" class="fade-view max-w-xl mx-auto p-6 w-full hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-6 shadow-2xl relative">
+            <main id="page-admin" class="fade-view max-w-xl mx-auto w-full hidden">
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-[36px] p-8 space-y-6 shadow-2xl backdrop-blur-xl">
                     <div>
-                        <h2 class="text-xs font-black uppercase tracking-wider text-blue-400 mb-1">📅 Match Scheduler Pipeline</h2>
-                        <p class="text-slate-500 text-[11px] mb-4">Input match details below to update the system instantly.</p>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">📅 Production Scheduler</h2>
+                        <p class="text-slate-500 text-xs mb-6">Manage scheduled fixtures in the stream registry.</p>
                         
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-2 gap-3">
-                                <input type="text" id="match-home" placeholder="Home Country (e.g., Brazil)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
-                                <input type="text" id="match-away" placeholder="Away Country (e.g., France)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <div class="space-y-3.5">
+                            <div class="grid grid-cols-2 gap-3.5">
+                                <input type="text" id="match-home" placeholder="Home Team" class="w-full bg-slate-950/80 border border-slate-800/80 rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors placeholder-slate-600">
+                                <input type="text" id="match-away" placeholder="Away Team" class="w-full bg-slate-950/80 border border-slate-800/80 rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors placeholder-slate-600">
                             </div>
-                            <div>
-                                <label class="text-[10px] uppercase font-mono tracking-wider text-slate-500 block mb-1 ml-1">Kickoff Time Configuration (SGT / GMT+8)</label>
-                                <input type="datetime-local" id="match-time" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
-                            </div>
-                            <input type="text" id="match-url" placeholder="M3U8 HLS Broadcast Target Source Link" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-colors">
-                            <button onclick="deployNewMatch()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] font-bold py-3 rounded-2xl text-xs uppercase tracking-widest text-white transition-all shadow-lg">Commit To Registry</button>
+                            <input type="datetime-local" id="match-time" class="w-full bg-slate-950/80 border border-slate-800/80 rounded-2xl px-4 py-3.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
+                            <input type="text" id="match-url" placeholder="M3U8 HLS Broadcast Source Link" class="w-full bg-slate-950/80 border border-slate-800/80 rounded-2xl px-4 py-3.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-colors placeholder-slate-600">
+                            <button onclick="deployNewMatch()" class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-3.5 rounded-2xl text-xs uppercase tracking-widest text-white transition-all shadow-xl shadow-blue-600/10">Commit Registry</button>
                         </div>
                     </div>
-
                     <hr class="border-slate-800/60">
-
                     <div>
-                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2.5">Scheduled Queue</h3>
-                        <div id="admin-schedule-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3.5">Scheduled Queue</h3>
+                        <div id="admin-schedule-list" class="space-y-2.5 max-h-48 overflow-y-auto pr-1"></div>
                     </div>
                 </div>
             </main>
@@ -304,21 +214,15 @@
     </div>
 
     <div id="upcoming-panel" class="fixed bottom-6 right-6 z-30 flex flex-col items-end pointer-events-none hidden">
-        <button id="upcoming-open-btn" onclick="toggleUpcomingPanel(true)" class="pointer-events-auto bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-full px-4 py-2.5 flex items-center gap-2.5 shadow-2xl transition-all hover:scale-105 active:scale-95 text-xs font-bold tracking-wide text-slate-200">
-            <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
+        <button id="upcoming-open-btn" onclick="toggleUpcomingPanel(true)" class="pointer-events-auto bg-slate-900/90 hover:bg-slate-800 backdrop-blur-xl border border-slate-800 rounded-2xl px-5 py-3.5 flex items-center gap-3 shadow-2xl transition-all hover:scale-[1.02] active:scale-95 text-xs font-bold tracking-wide text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-blue-500 live-pulse"></span>
             Upcoming Fixtures (<span id="upcoming-counter">0</span>)
         </button>
 
-        <div id="upcoming-card" class="pointer-events-auto w-80 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl p-5 flex flex-col space-y-4 max-h-[420px] origin-bottom-right scale-0 opacity-0 transform transition-all duration-300 hidden">
-            <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-sm">📅</span>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Upcoming Match Stages</h3>
-                </div>
-                <button onclick="toggleUpcomingPanel(false)" class="text-slate-500 hover:text-white transition-colors bg-slate-950 hover:bg-slate-800 h-6 w-6 flex items-center justify-center rounded-lg text-xs font-bold border border-slate-800">×</button>
+        <div id="upcoming-card" class="pointer-events-auto w-80 bg-slate-900/95 backdrop-blur-2xl border border-slate-800/80 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-6 flex flex-col space-y-4 max-h-[400px] origin-bottom-right scale-0 opacity-0 transform transition-all duration-300 hidden">
+            <div class="flex items-center justify-between border-b border-slate-800/60 pb-3.5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Upcoming Timeline</h3>
+                <button onclick="toggleUpcomingPanel(false)" class="text-slate-500 hover:text-white bg-slate-950 h-6 w-6 flex items-center justify-center rounded-lg text-xs font-bold border border-slate-800">×</button>
             </div>
             <div id="upcoming-list-container" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs"></div>
         </div>
@@ -334,27 +238,15 @@
         let cachedMatchesStore = [];
 
         const countryCodes = {
-            "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
-            "bahamas": "bs", "bahrain": "bh", "bangladesh": "bd", "barbados": "bb", "belarus": "by", "belgium": "be", "belize": "bz", "benin": "bj", "bhutan": "bt", "bolivia": "bo",
-            "bosnia and herzegovina": "ba", "bosnia": "ba", "botswana": "bw", "brazil": "br", "brunei": "bn", "bulgaria": "bg", "burkina faso": "bf", "burundi": "bi", "cambodia": "kh",
-            "cameroon": "cm", "canada": "ca", "cape verde": "cv", "central african republic": "cf", "chad": "td", "chile": "cl", "china": "cn", "colombia": "co", "comoros": "km",
-            "congo": "cg", "costa rica": "cr", "croatia": "hr", "cuba": "cu", "cyprus": "cy", "czechia": "cz", "czech republic": "cz", "denmark": "dk", "djibouti": "dj", "dominica": "dm",
-            "dominican republic": "do", "ecuador": "ec", "egypt": "eg", "el salvador": "sv", "equatorial guinea": "gq", "eritrea": "er", "estonia": "ee", "eswatini": "sz", "ethiopia": "et",
-            "fiji": "fj", "finland": "fi", "france": "fr", "gabon": "ga", "gambia": "gm", "georgia": "ge", "germany": "de", "ghana": "gh", "greece": "gr", "grenada": "gd", "guatemala": "gt",
-            "guinea": "gn", "guinea-bissau": "gw", "guyana": "gy", "haiti": "ht", "honduras": "hn", "hungary": "hu", "iceland": "is", "india": "in", "indonesia": "id", "iran": "ir",
-            "iraq": "iq", "ireland": "ie", "israel": "il", "italy": "it", "jamaica": "jm", "japan": "jp", "jordan": "jo", "kazakhstan": "kz", "kenya": "ke", "kiribati": "ki",
-            "kuwait": "kw", "kyrgyzstan": "kg", "laos": "la", "latvia": "lv", "lebanon": "lb", "lesotho": "ls", "liberia": "lr", "libya": "ly", "liechtenstein": "li", "lithuania": "lt",
-            "luxembourg": "lu", "madagascar": "mg", "malawi": "mw", "malaysia": "my", "maldives": "mv", "mali": "ml", "malta": "mt", "marshall islands": "mh", "mauritania": "mr",
-            "mauritius": "mu", "mexico": "mx", "micronesia": "fm", "moldova": "md", "monaco": "mc", "mongolia": "mn", "montenegro": "me", "morocco": "ma", "mozambique": "mz",
-            "myanmar": "mm", "namibia": "na", "nauru": "nr", "nepal": "np", "netherlands": "nl", "new zealand": "nz", "nicaragua": "ni", "niger": "ne", "nigeria": "ng", "north korea": "kp",
-            "north macedonia": "mk", "norway": "no", "oman": "om", "pakistan": "pk", "palau": "pw", "panama": "pa", "papua new guinea": "pg", "paraguay": "py", "peru": "pe",
-            "philippines": "ph", "poland": "pl", "portugal": "pt", "qatar": "qa", "romania": "ro", "russia": "ru", "rwanda": "rw", "saint kitts and nevis": "kn", "saint lucia": "lc",
-            "saint vincent": "vc", "samoa": "ws", "san marino": "sm", "sao tome and principe": "st", "saudi arabia": "sa", "senegal": "sn", "serbia": "rs", "seychelles": "sc",
-            "sierra leone": "sl", "singapore": "sg", "slovakia": "sk", "slovenia": "si", "solomon islands": "sb", "somalia": "so", "south africa": "za", "south korea": "kr",
-            "south sudan": "ss", "spain": "es", "sri lanka": "lk", "sudan": "sd", "suriname": "sr", "sweden": "se", "switzerland": "ch", "syria": "sy", "taiwan": "tw", "tajikistan": "tj",
-            "tanzania": "tz", "thailand": "th", "timor-leste": "tl", "togo": "tg", "tonga": "to", "trinidad and tobago": "tt", "tunisia": "tn", "turkey": "tr", "turkmenistan": "tm",
-            "tuvalu": "tv", "uganda": "ug", "ukraine": "ua", "united arab emirates": "ae", "united kingdom": "gb", "england": "gb", "scotland": "gb", "wales": "gb", "united states": "us", "usa": "us",
-            "uruguay": "uy", "uzbekistan": "uz", "vanuatu": "vu", "vatican city": "va", "venezuela": "ve", "vietnam": "vn", "yemen": "ye", "zambia": "zm", "zimbabwe": "zw"
+            "afghanistan": "af", "albania": "al", "algeria": "dz", "argentina": "ar", "australia": "au", "austria": "at",
+            "belgium": "be", "brazil": "br", "canada": "ca", "chile": "cl", "china": "cn", "colombia": "co", "croatia": "hr",
+            "czechia": "cz", "czech republic": "cz", "denmark": "dk", "egypt": "eg", "england": "gb", "france": "fr",
+            "germany": "de", "ghana": "gh", "greece": "gr", "indonesia": "id", "iran": "ir", "iraq": "iq", "italy": "it",
+            "japan": "jp", "malaysia": "my", "mexico": "mx", "morocco": "ma", "netherlands": "nl", "new zealand": "nz",
+            "nigeria": "ng", "norway": "no", "poland": "pl", "portugal": "pt", "qatar": "qa", "russia": "ru", "saudi arabia": "sa",
+            "scotland": "gb", "senegal": "sn", "serbia": "rs", "singapore": "sg", "south africa": "za", "south korea": "kr",
+            "spain": "es", "sweden": "se", "switzerland": "ch", "thailand": "th", "turkey": "tr", "ukraine": "ua",
+            "united arab emirates": "ae", "united kingdom": "gb", "united states": "us", "usa": "us", "uruguay": "uy", "uzbekistan": "uz"
         };
 
         function getFlagUrl(name) {
@@ -364,9 +256,7 @@
 
         function checkGatePassword() {
             if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
-                const gate = document.getElementById('gate-screen');
-                gate.classList.add('opacity-0', 'pointer-events-none');
-                
+                document.getElementById('gate-screen').classList.add('opacity-0', 'pointer-events-none');
                 const intro = document.getElementById('intro-overlay');
                 intro.classList.remove('hidden');
 
@@ -374,52 +264,31 @@
                     intro.classList.add('opacity-0');
                     const app = document.getElementById('main-app');
                     app.classList.remove('hidden');
-                    
-                    setTimeout(() => { 
-                        app.classList.add('opacity-100'); 
-                        intro.classList.add('hidden');
-                    }, 50);
-
+                    setTimeout(() => { app.classList.add('opacity-100'); intro.classList.add('hidden'); }, 50);
                     initPortal();
-                }, 3800);
-
-            } else {
-                alert("Incorrect entry credentials.");
-            }
+                }, 2400);
+            } else { alert("Incorrect credentials."); }
         }
 
         function toggleUpcomingPanel(open) {
             const card = document.getElementById('upcoming-card');
             const openBtn = document.getElementById('upcoming-open-btn');
-            
             if (open) {
                 card.classList.remove('hidden');
                 setTimeout(() => {
-                    card.classList.remove('scale-0', 'opacity-0');
-                    card.classList.add('scale-100', 'opacity-100');
-                    openBtn.classList.add('scale-0', 'opacity-0');
-                    setTimeout(() => openBtn.classList.add('hidden'), 200);
+                    card.classList.remove('scale-0', 'opacity-0'); card.classList.add('scale-100', 'opacity-100');
+                    openBtn.classList.add('scale-0', 'opacity-0'); setTimeout(() => openBtn.classList.add('hidden'), 200);
                 }, 10);
             } else {
-                card.classList.remove('scale-100', 'opacity-100');
-                card.classList.add('scale-0', 'opacity-0');
+                card.classList.remove('scale-100', 'opacity-100'); card.classList.add('scale-0', 'opacity-0');
                 openBtn.classList.remove('hidden');
-                setTimeout(() => {
-                    openBtn.classList.remove('scale-0', 'opacity-0');
-                    card.classList.add('hidden');
-                }, 300);
+                setTimeout(() => { openBtn.classList.remove('scale-0', 'opacity-0'); card.classList.add('hidden'); }, 300);
             }
         }
 
         function promptAdminLogin() {
-            if (!document.getElementById('page-admin').classList.contains('hidden')) {
-                showPage('home'); return;
-            }
-            if (prompt("Enter Terminal Passkey:") === ACCESS_KEYS.admin) {
-                showPage('admin');
-            } else {
-                alert("Authorization Denied.");
-            }
+            if (!document.getElementById('page-admin').classList.contains('hidden')) { showPage('home'); return; }
+            if (prompt("Enter Passkey:") === ACCESS_KEYS.admin) showPage('admin'); else alert("Denied.");
         }
 
         function runClock() {
@@ -432,38 +301,25 @@
 
         function showPage(id) {
             if (id !== 'player') closeMediaPipeline();
-            
             const targetedMain = document.getElementById(`page-${id}`);
-            if (id === 'home' && (cachedMatchesStore.length === 0)) {
+            if (id === 'home' && cachedMatchesStore.length === 0) {
                 document.getElementById('page-home').classList.add('hidden');
                 document.getElementById('page-home-empty').classList.remove('hidden');
                 setTimeout(() => document.getElementById('page-home-empty').classList.add('view-active'), 50);
             }
-
             document.querySelectorAll('main').forEach(m => {
-                m.classList.remove('view-active');
-                setTimeout(() => { m.classList.add('hidden'); }, 300);
+                m.classList.remove('view-active'); setTimeout(() => { m.classList.add('hidden'); }, 300);
             });
-
             setTimeout(() => {
                 targetedMain.classList.remove('hidden');
                 setTimeout(() => { targetedMain.classList.add('view-active'); }, 50);
             }, 300);
-
-            const backBtn = document.getElementById('btn-home');
-            const adminBtn = document.getElementById('btn-admin-trigger');
-            if (id === 'home') {
-                backBtn.classList.add('hidden');
-                adminBtn.innerText = "Settings";
-            } else {
-                backBtn.classList.remove('hidden');
-                if (id === 'admin') adminBtn.innerText = "Close Terminal";
-            }
+            document.getElementById('btn-home').classList.toggle('hidden', id === 'home');
+            document.getElementById('btn-admin-trigger').innerText = id === 'home' ? "Settings" : (id === 'admin' ? "Close" : "Settings");
         }
 
         function initPortal() {
-            runClock();
-            syncScheduleStore();
+            runClock(); syncScheduleStore();
             document.getElementById('upcoming-panel').classList.remove('hidden');
             setInterval(syncScheduleStore, 30000);
         }
@@ -476,9 +332,7 @@
                 cachedMatchesStore = await res.json();
                 renderAdminControlList(cachedMatchesStore);
                 buildUpcomingMatchesPanel(cachedMatchesStore);
-                
-                if (document.getElementById('page-player').classList.contains('hidden') && !document.getElementById('page-admin').classList.contains('hidden')) {
-                } else if (document.getElementById('page-player').classList.contains('hidden')) {
+                if (document.getElementById('page-player').classList.contains('hidden') && document.getElementById('page-admin').classList.contains('hidden')) {
                     showPage('home');
                 }
             } catch (err) { console.error(err); }
@@ -487,174 +341,148 @@
         function buildUpcomingMatchesPanel(data) {
             const container = document.getElementById('upcoming-list-container');
             const now = new Date().getTime();
-            
-            const upcomingMatches = data.filter(item => new Date(item.start_time).getTime() > now);
+            // Maximum live session duration evaluated strictly to 2 hours
+            const upcomingMatches = data.filter(item => {
+                return now < (new Date(item.start_time).getTime() + (2 * 60 * 60 * 1000));
+            });
             document.getElementById('upcoming-counter').innerText = upcomingMatches.length;
-
             container.innerHTML = '';
-            
             if (upcomingMatches.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-8">No upcoming matches scheduled.</div>`;
-                return;
+                container.innerHTML = `<div class="text-slate-600 text-center py-6 font-medium">Timeline empty</div>`; return;
             }
-
             upcomingMatches.forEach(item => {
-                let c1 = "Home Team", c2 = "Away Team";
+                let c1 = "Team A", c2 = "Team B";
                 if (item.title.toLowerCase().includes('vs')) {
-                    const parts = item.title.split(/vs/i);
-                    c1 = parts[0].trim(); c2 = parts[1].trim();
+                    const parts = item.title.split(/vs/i); c1 = parts[0].trim(); c2 = parts[1].trim();
                 }
-
                 const displayTime = new Date(item.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                const displayDate = new Date(item.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
                 const cardRow = document.createElement('div');
-                cardRow.className = "bg-slate-950/90 p-3 rounded-2xl border border-slate-800 flex flex-col space-y-2 hover:border-slate-700 transition-all";
+                cardRow.className = "bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 flex flex-col space-y-2 hover:border-slate-700 transition-all";
                 cardRow.innerHTML = `
-                    <div class="flex items-center justify-between text-[10px] text-amber-400 font-mono font-bold">
-                        <span>${displayDate}</span>
-                        <span>${displayTime} SGT</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 truncate">
-                            <img src="${getFlagUrl(c1)}" class="w-5 h-3.5 object-cover rounded-sm border border-slate-800">
-                            <span class="font-bold text-slate-300 truncate max-w-[80px]">${c1}</span>
-                            <span class="text-slate-500 text-[10px]">vs</span>
-                            <img src="${getFlagUrl(c2)}" class="w-5 h-3.5 object-cover rounded-sm border border-slate-800">
-                            <span class="font-bold text-slate-300 truncate max-w-[80px]">${c2}</span>
-                        </div>
-                    </div>
-                `;
+                    <div class="text-[10px] text-blue-400 font-mono font-bold">${displayTime} SGT</div>
+                    <div class="flex items-center gap-2 truncate">
+                        <img src="${getFlagUrl(c1)}" class="w-4 h-3 object-cover rounded-sm">
+                        <span class="font-bold text-slate-300 truncate max-w-[80px]">${c1}</span>
+                        <span class="text-slate-600 font-mono">v</span>
+                        <img src="${getFlagUrl(c2)}" class="w-4 h-3 object-cover rounded-sm">
+                        <span class="font-bold text-slate-300 truncate max-w-[80px]">${c2}</span>
+                    </div>`;
                 container.appendChild(cardRow);
             });
         }
 
         function evaluateActiveTimelineState() {
             if (!cachedMatchesStore || cachedMatchesStore.length === 0) return;
-
             const now = new Date().getTime();
             let displayTargetMatch = null;
             let isLiveCurrently = false;
+            let formattedStreamRuntime = "00:00:00";
+            
+            // STRICT 2 Hours Max Duration Limit
+            const durationLimitMs = 2 * 60 * 60 * 1000; 
 
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
-                const matchDurationLimit = mTime + (2.5 * 60 * 60 * 1000);
-                if (now >= mTime && now <= matchDurationLimit) {
+                if (now >= mTime && now <= (mTime + durationLimitMs)) {
                     displayTargetMatch = cachedMatchesStore[i];
                     isLiveCurrently = true;
+                    
+                    // Count-up stream active duration ticker calculation
+                    const totalSecsElapsed = Math.floor((now - mTime) / 1000);
+                    const runHours = Math.floor(totalSecsElapsed / 3600);
+                    const runMins = Math.floor((totalSecsElapsed % 3600) / 60);
+                    const runSecs = totalSecsElapsed % 60;
+                    formattedStreamRuntime = `${runHours.toString().padStart(2, '0')}:${runMins.toString().padStart(2, '0')}:${runSecs.toString().padStart(2, '0')}`;
                     break;
                 }
             }
 
             if (!displayTargetMatch) {
                 for (let i = 0; i < cachedMatchesStore.length; i++) {
-                    if (new Date(cachedMatchesStore[i].start_time).getTime() > now) {
-                        displayTargetMatch = cachedMatchesStore[i];
-                        break;
-                    }
+                    if (new Date(cachedMatchesStore[i].start_time).getTime() > now) { displayTargetMatch = cachedMatchesStore[i]; break; }
                 }
             }
-
-            if (!displayTargetMatch && cachedMatchesStore.length > 0) {
-                displayTargetMatch = cachedMatchesStore[cachedMatchesStore.length - 1];
-            }
+            if (!displayTargetMatch && cachedMatchesStore.length > 0) displayTargetMatch = cachedMatchesStore[cachedMatchesStore.length - 1];
 
             if (displayTargetMatch && !document.getElementById('page-home').classList.contains('hidden')) {
-                let c1 = "Home Team", c2 = "Away Team";
+                let c1 = "Team A", c2 = "Team B";
                 if (displayTargetMatch.title.toLowerCase().includes('vs')) {
-                    const parts = displayTargetMatch.title.split(/vs/i);
-                    c1 = parts[0].trim(); c2 = parts[1].trim();
+                    const parts = displayTargetMatch.title.split(/vs/i); c1 = parts[0].trim(); c2 = parts[1].trim();
                 }
-
                 document.getElementById('name-home').innerText = c1;
                 document.getElementById('name-away').innerText = c2;
-                document.getElementById('stage-match-title').innerHTML = `${c1} <span class="text-blue-500">VS</span> ${c2}`;
-                
+                document.getElementById('stage-match-title').innerHTML = `${c1} <span class="text-blue-500 font-mono font-medium mx-1">vs</span> ${c2}`;
                 document.getElementById('flag-home').src = getFlagUrl(c1);
                 document.getElementById('flag-away').src = getFlagUrl(c2);
 
                 const badgePill = document.getElementById('display-status-pill');
                 const badgeText = document.getElementById('display-status-text');
                 const countdownWrap = document.getElementById('countdown-wrap');
+                const countdownLabel = document.getElementById('countdown-label');
+                const countdownTimer = document.getElementById('countdown-timer');
                 const actionBtn = document.getElementById('stage-launch-btn');
                 const formattedKickoff = new Date(displayTargetMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                actionBtn.onclick = () => { triggerCreativeTrophyTransition(displayTargetMatch.url, displayTargetMatch.title); };
+                actionBtn.onclick = () => { bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title); };
 
                 if (isLiveCurrently) {
-                    badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-red-500/5 border border-red-500/20 text-red-400 px-3 py-1 rounded-full flex items-center gap-1.5 live-pulse";
-                    badgeText.innerText = "● LIVE NOW";
+                    badgePill.className = "font-bold tracking-widest text-[9px] uppercase bg-red-500/10 border border-red-500/20 text-red-400 px-3.5 py-1.5 rounded-xl flex items-center gap-2 live-pulse";
+                    badgeText.innerText = "● LIVE STREAM ACTIVE";
                     document.getElementById('display-time-tag').innerText = `STARTED AT ${formattedKickoff} SGT`;
-                    countdownWrap.classList.add('hidden');
-                    actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-blue-600/10 cursor-pointer active:scale-95";
+                    
+                    countdownWrap.classList.remove('hidden');
+                    countdownLabel.innerText = "STREAM RUNTIME";
+                    countdownTimer.innerText = formattedStreamRuntime;
+                    countdownTimer.className = "font-mono text-5xl font-bold text-red-500 tracking-tight bg-slate-950/40 px-8 py-4 rounded-3xl border border-slate-800 inline-block shadow-2xl backdrop-blur-md";
+
+                    actionBtn.className = "w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-xl cursor-pointer active:scale-[0.99]";
                     actionBtn.innerText = "Watch Transmission Feed ↗";
                 } else {
                     const targetKickoffTime = new Date(displayTargetMatch.start_time).getTime();
                     const diff = targetKickoffTime - now;
 
                     if (diff > 0) {
-                        badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-amber-500/5 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full flex items-center gap-1.5";
+                        badgePill.className = "font-bold tracking-widest text-[9px] uppercase bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3.5 py-1.5 rounded-xl flex items-center gap-2";
                         badgeText.innerText = "UPCOMING MATCH STAGE";
                         document.getElementById('display-time-tag').innerText = `KICKOFF AT ${formattedKickoff} SGT`;
+                        
                         countdownWrap.classList.remove('hidden');
+                        countdownLabel.innerText = "MATCH COUNTDOWN";
+                        countdownTimer.className = "font-mono text-5xl font-bold text-amber-400 tracking-tight bg-slate-950/40 px-8 py-4 rounded-3xl border border-slate-800 inline-block shadow-2xl backdrop-blur-md";
 
                         const hours = Math.floor(diff / (1000 * 60 * 60));
                         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                        document.getElementById('countdown-timer').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        countdownTimer.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-                        actionBtn.className = "w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-amber-600/10 cursor-pointer active:scale-95";
-                        actionBtn.innerText = "Watch Pre-Match Coverage ↗";
+                        actionBtn.className = "w-full bg-gradient-to-r from-slate-800 to-slate-700 text-slate-300 font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase border border-slate-700 active:scale-[0.99]";
+                        actionBtn.innerText = "Pre-Match Coverage Locked";
                     } else {
-                        badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-slate-950 border border-slate-800 text-slate-500 px-3 py-1 rounded-full flex items-center gap-1.5";
-                        badgeText.innerText = "MATCH CONCLUDED";
-                        document.getElementById('display-time-tag').innerText = "FULL TIME";
+                        // Kill player if inside feed when 2-hour max threshold hits
+                        if (!document.getElementById('page-player').classList.contains('hidden')) { closeMediaPipeline(); showPage('home'); }
+                        badgePill.className = "font-bold tracking-widest text-[9px] uppercase bg-slate-950 border border-slate-800 text-slate-500 px-3.5 py-1.5 rounded-xl flex items-center gap-2";
+                        badgeText.innerText = "BROADCAST CONCLUDED";
+                        document.getElementById('display-time-tag').innerText = "OFF-AIR";
                         countdownWrap.classList.add('hidden');
-                        actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer active:scale-95";
-                        actionBtn.innerText = "Watch Match Replay Feed ↗";
+                        actionBtn.className = "w-full bg-slate-950 text-slate-600 font-bold py-5 rounded-2xl text-xs tracking-widest uppercase border border-slate-900 cursor-not-allowed shadow-inner";
+                        actionBtn.innerText = "Transmission Terminated (2H Limit)";
+                        actionBtn.onclick = null;
                     }
                 }
             }
         }
 
-        function triggerCreativeTrophyTransition(url, title) {
-            const overlay = document.getElementById('match-launch-overlay');
-            const headerTitle = document.getElementById('launch-overlay-title');
-            
-            headerTitle.innerText = title.toUpperCase();
-            overlay.classList.remove('hidden');
-            
-            // Reflow trigger for transition
-            setTimeout(() => {
-                overlay.classList.remove('opacity-0');
-                overlay.classList.add('opacity-100');
-            }, 50);
-
-            // Hold intermission screen for 2.8 seconds, then spin down into video element frame
-            setTimeout(() => {
-                overlay.classList.remove('opacity-100');
-                overlay.classList.add('opacity-0');
-                
-                bootMatchPlayer(url, title);
-                
-                setTimeout(() => {
-                    overlay.classList.add('hidden');
-                }, 700);
-            }, 2800);
-        }
-
         function renderAdminControlList(data) {
-            const list = document.getElementById('admin-schedule-list');
-            list.innerHTML = '';
+            const list = document.getElementById('admin-schedule-list'); list.innerHTML = '';
             data.forEach(item => {
                 const displayTime = new Date(item.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
                 const row = document.createElement('div');
-                row.className = "flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs transform transition-all hover:border-slate-700";
+                row.className = "flex items-center justify-between bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 text-xs transition-all hover:border-slate-700";
                 row.innerHTML = `
-                    <div class="truncate pr-4 text-slate-300">
-                        <span class="text-blue-400 font-bold mr-1">[SGT: ${displayTime}]</span> ${item.title}
+                    <div class="truncate pr-4 text-slate-300 font-medium">
+                        <span class="text-blue-500 font-bold mr-1 font-mono">[${displayTime}]</span> ${item.title}
                     </div>
-                    <button onclick="strikeMatch(${item.id})" class="text-red-400 font-bold px-2.5 py-1 bg-red-500/5 rounded-lg border border-red-500/10 hover:bg-red-500 hover:text-white transition active:scale-95">Remove</button>
+                    <button onclick="strikeMatch(${item.id})" class="text-red-400 font-bold px-3 py-1.5 bg-red-500/5 rounded-xl border border-red-500/10 hover:bg-red-500 hover:text-white transition active:scale-95 text-[11px]">Drop</button>
                 `;
                 list.appendChild(row);
             });
@@ -665,15 +493,8 @@
             const away = document.getElementById('match-away').value.trim();
             const timeVal = document.getElementById('match-time').value;
             const url = document.getElementById('match-url').value.trim();
-
-            if (!home || !timeVal || !url) return alert("All fields are mandatory.");
-
-            const payload = {
-                title: away ? `${home} vs ${away}` : home,
-                start_time: new Date(timeVal).toISOString(),
-                url: url
-            };
-
+            if (!home || !timeVal || !url) return alert("Fields required.");
+            const payload = { title: away ? `${home} vs ${away}` : home, start_time: new Date(timeVal).toISOString(), url: url };
             try {
                 const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams`, {
                     method: 'POST',
@@ -681,41 +502,35 @@
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
-                    document.getElementById('match-home').value = '';
-                    document.getElementById('match-away').value = '';
-                    document.getElementById('match-time').value = '';
-                    document.getElementById('match-url').value = '';
+                    document.getElementById('match-home').value = ''; document.getElementById('match-away').value = '';
+                    document.getElementById('match-time').value = ''; document.getElementById('match-url').value = '';
                     syncScheduleStore();
                 }
-            } catch (err) { alert("Connection rejected."); }
+            } catch (err) { alert("Rejected."); }
         }
 
         async function strikeMatch(id) {
-            if (!confirm("Remove selected match?")) return;
+            if (!confirm("Remove fixture?")) return;
             try {
                 const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?id=eq.${id}`, {
                     method: 'DELETE',
                     headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
                 });
                 if (res.ok) syncScheduleStore();
-            } catch (err) { alert("Action failed."); }
+            } catch (err) { alert("Failed."); }
         }
 
         function bootMatchPlayer(url, title) {
             showPage('player');
             document.getElementById('player-title').innerText = decodeURIComponent(title);
-            
             const video = document.getElementById('video-element');
             const target = decodeURIComponent(url);
-
             if (Hls.isSupported()) {
                 activeHls = new Hls({ maxBufferSize: 24 * 1024 * 1024 });
-                activeHls.loadSource(target);
-                activeHls.attachMedia(video);
+                activeHls.loadSource(target); activeHls.attachMedia(video);
                 activeHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = target;
-                video.play().catch(()=>{});
+                video.src = target; video.play().catch(()=>{});
             }
         }
 
