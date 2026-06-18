@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Football Streaming brought to you by Void Enterprises</title>
+    <title>Arena Live World Cup Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
@@ -19,16 +19,9 @@
             opacity: 1;
             transform: translateY(0);
         }
-        
-        .bar-wave { display: inline-block; width: 3px; background-color: #f59e0b; border-radius: 2px; animation: bounce 0.6s ease-in-out infinite alternate; }
-        .bar-wave:nth-child(2) { animation-delay: 0.15s; }
-        .bar-wave:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes bounce { 0% { height: 4px; } 100% { height: 16px; } }
     </style>
 </head>
-<body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600">
-
-    <audio id="bg-playlist-manager" preload="auto" crossorigin="anonymous"></audio>
+<body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600 relative">
 
     <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4 transition-all duration-500">
         <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl max-w-md w-full text-center transform scale-100 transition-all">
@@ -49,20 +42,6 @@
             </div>
             
             <div class="flex items-center gap-4">
-                
-                <div id="visualizer-pill" class="bg-slate-950/80 border border-slate-800 rounded-full pl-3 pr-4 py-1.5 flex items-center gap-3 text-[11px] max-w-[280px] shadow-inner">
-                    <div class="flex items-end gap-0.5 h-4 w-4">
-                        <span id="wave-1" class="bar-wave" style="animation-play-state: paused;"></span>
-                        <span id="wave-2" class="bar-wave" style="animation-play-state: paused;"></span>
-                        <span id="wave-3" class="bar-wave" style="animation-play-state: paused;"></span>
-                    </div>
-                    <span id="track-name-display" class="font-bold truncate text-slate-400 max-w-[120px]">Standby...</span>
-                    <div class="flex items-center gap-1 border-l border-slate-800 pl-2">
-                        <button onclick="toggleAudioPlayback()" id="audio-toggle-btn" class="hover:text-amber-400 px-1 transition-colors">▶</button>
-                        <button onclick="skipToNextTrack()" class="hover:text-amber-400 px-1 text-xs transition-colors">⏭</button>
-                    </div>
-                </div>
-
                 <div class="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] font-mono text-amber-400 shadow-inner">
                     SGT: <span id="sng-clock">00:00:00</span>
                 </div>
@@ -170,6 +149,29 @@
         </div>
     </div>
 
+    <div id="upcoming-panel" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none hidden">
+        <button id="upcoming-open-btn" onclick="toggleUpcomingPanel(true)" class="pointer-events-auto bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-full px-4 py-2.5 flex items-center gap-2.5 shadow-2xl transition-all hover:scale-105 active:scale-95 text-xs font-bold tracking-wide text-slate-200">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            Upcoming Fixtures (<span id="upcoming-counter">0</span>)
+        </button>
+
+        <div id="upcoming-card" class="pointer-events-auto w-80 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl p-5 flex flex-col space-y-4 max-h-[420px] origin-bottom-right scale-0 opacity-0 transform transition-all duration-300 hidden">
+            <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">📅</span>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Upcoming Stages</h3>
+                </div>
+                <button onclick="toggleUpcomingPanel(false)" class="text-slate-500 hover:text-white transition-colors bg-slate-950 hover:bg-slate-800 h-6 w-6 flex items-center justify-center rounded-lg text-xs font-bold border border-slate-800">×</button>
+            </div>
+            
+            <div id="upcoming-list-container" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
+                </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_CONFIG = {
             url: "https://cjsngpngbgomdzovzteq.supabase.co",
@@ -178,16 +180,6 @@
         const ACCESS_KEYS = { gate: "football123", admin: "admin123" };
         let activeHls = null;
         let cachedMatchesStore = [];
-        let shuffledAudioPlaylist = [];
-        let currentTrackIndex = 0;
-
-        // ACCESSIBLE PUBLIC CORs MP3 AUDIO STREAM LINKS (Direct premium audio files)
-        const trackCatalogue = [
-            { name: "Epic Anthem", url: "https://actions.google.com/sounds/v1/ambiences/stadium_cheering.ogg" },
-            { name: "Synth Wave 1", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-            { name: "Synth Wave 2", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-            { name: "Synth Wave 3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
-        ];
 
         const countryCodes = {
             "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
@@ -218,52 +210,6 @@
             return `https://flagcdn.com/w160/${code}.png`;
         }
 
-        function initJamPlaylist() {
-            shuffledAudioPlaylist = [...trackCatalogue].sort(() => Math.random() - 0.5);
-            currentTrackIndex = 0;
-            
-            const player = document.getElementById('bg-playlist-manager');
-            player.volume = 0.20;
-            
-            player.addEventListener('ended', () => { skipToNextTrack(); });
-            mountTrackSource();
-        }
-
-        function mountTrackSource() {
-            const player = document.getElementById('bg-playlist-manager');
-            const track = shuffledAudioPlaylist[currentTrackIndex];
-            player.src = track.url;
-            player.load();
-            document.getElementById('track-name-display').innerText = track.name;
-        }
-
-        function toggleAudioPlayback(forceState) {
-            const player = document.getElementById('bg-playlist-manager');
-            const btn = document.getElementById('audio-toggle-btn');
-            const waves = [document.getElementById('wave-1'), document.getElementById('wave-2'), document.getElementById('wave-3')];
-
-            const shouldPlay = forceState !== undefined ? forceState : player.paused;
-
-            if (shouldPlay) {
-                player.play().then(() => {
-                    btn.innerText = "⏸";
-                    waves.forEach(w => w.style.animationPlayState = 'running');
-                }).catch(err => {
-                    console.log("Audio play postponed until context unlock:", err);
-                });
-            } else {
-                player.pause();
-                btn.innerText = "▶";
-                waves.forEach(w => w.style.animationPlayState = 'paused');
-            }
-        }
-
-        function skipToNextTrack() {
-            currentTrackIndex = (currentTrackIndex + 1) % shuffledAudioPlaylist.length;
-            mountTrackSource();
-            setTimeout(() => { toggleAudioPlayback(true); }, 50);
-        }
-
         function checkGatePassword() {
             if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
                 const gate = document.getElementById('gate-screen');
@@ -273,11 +219,32 @@
                 app.classList.remove('hidden');
                 setTimeout(() => { app.classList.add('opacity-100'); }, 50);
 
-                initJamPlaylist();
-                toggleAudioPlayback(true);
                 initPortal();
             } else {
                 alert("Incorrect entry credentials.");
+            }
+        }
+
+        function toggleUpcomingPanel(open) {
+            const card = document.getElementById('upcoming-card');
+            const openBtn = document.getElementById('upcoming-open-btn');
+            
+            if (open) {
+                card.classList.remove('hidden');
+                setTimeout(() => {
+                    card.classList.remove('scale-0', 'opacity-0');
+                    card.classList.add('scale-100', 'opacity-100');
+                    openBtn.classList.add('scale-0', 'opacity-0');
+                    setTimeout(() => openBtn.classList.add('hidden'), 200);
+                }, 10);
+            } else {
+                card.classList.remove('scale-100', 'opacity-100');
+                card.classList.add('scale-0', 'opacity-0');
+                openBtn.classList.remove('hidden');
+                setTimeout(() => {
+                    openBtn.classList.remove('scale-0', 'opacity-0');
+                    card.classList.add('hidden');
+                }, 300);
             }
         }
 
@@ -334,6 +301,7 @@
         function initPortal() {
             runClock();
             syncScheduleStore();
+            document.getElementById('upcoming-panel').classList.remove('hidden');
             setInterval(syncScheduleStore, 30000);
         }
 
@@ -344,12 +312,59 @@
                 });
                 cachedMatchesStore = await res.json();
                 renderAdminControlList(cachedMatchesStore);
+                buildUpcomingMatchesPanel(cachedMatchesStore);
                 
                 if (document.getElementById('page-player').classList.contains('hidden') && !document.getElementById('page-admin').classList.contains('hidden')) {
                 } else if (document.getElementById('page-player').classList.contains('hidden')) {
                     showPage('home');
                 }
             } catch (err) { console.error(err); }
+        }
+
+        function buildUpcomingMatchesPanel(data) {
+            const container = document.getElementById('upcoming-list-container');
+            const now = new Date().getTime();
+            
+            // Filter store for items that are strictly structured in the future
+            const upcomingMatches = data.filter(item => new Date(item.start_time).getTime() > now);
+            document.getElementById('upcoming-counter').innerText = upcomingMatches.length;
+
+            container.innerHTML = '';
+            
+            if (upcomingMatches.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-center py-8">No upcoming matches scheduled.</div>`;
+                return;
+            }
+
+            upcomingMatches.forEach(item => {
+                let c1 = "Home Team", c2 = "Away Team";
+                if (item.title.toLowerCase().includes('vs')) {
+                    const parts = item.title.split(/vs/i);
+                    c1 = parts[0].trim(); c2 = parts[1].trim();
+                }
+
+                const displayTime = new Date(item.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                const displayDate = new Date(item.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                const cardRow = document.createElement('div');
+                cardRow.className = "bg-slate-950/90 p-3 rounded-2xl border border-slate-800 flex flex-col space-y-2 hover:border-slate-700 transition-all";
+                cardRow.innerHTML = `
+                    <div class="flex items-center justify-between text-[10px] text-amber-400 font-mono font-bold">
+                        <span>${displayDate}</span>
+                        <span>${displayTime} SGT</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 truncate">
+                            <img src="${getFlagUrl(c1)}" class="w-5 h-3.5 object-cover rounded-sm border border-slate-800">
+                            <span class="font-bold text-slate-300 truncate max-w-[80px]">${c1}</span>
+                            <span class="text-slate-500 text-[10px]">vs</span>
+                            <img src="${getFlagUrl(c2)}" class="w-5 h-3.5 object-cover rounded-sm border border-slate-800">
+                            <span class="font-bold text-slate-300 truncate max-w-[80px]">${c2}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(cardRow);
+            });
         }
 
         function evaluateActiveTimelineState() {
@@ -499,7 +514,6 @@
         }
 
         function bootMatchPlayer(url, title) {
-            toggleAudioPlayback(false);
             showPage('player');
             document.getElementById('player-title').innerText = decodeURIComponent(title);
             
