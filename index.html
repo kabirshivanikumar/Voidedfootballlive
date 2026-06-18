@@ -42,26 +42,28 @@
             
             <div id="no-active-stage" class="text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl hidden">
                 <span class="text-4xl block mb-4">💤</span>
-                <h2 class="text-lg font-black uppercase tracking-wider text-slate-400">Transmission Standby Mode</h2>
-                <p class="text-slate-500 text-xs mt-1">No matches programmed for this exact timeline block.</p>
-                <div id="countdown-banner" class="mt-6 inline-block bg-slate-950 text-amber-400 font-mono text-xs px-4 py-2 rounded-xl border border-slate-800 uppercase tracking-widest">
-                    Awaiting Schedule Input...
-                </div>
+                <h2 class="text-lg font-black uppercase tracking-wider text-slate-400">Database Empty</h2>
+                <p class="text-slate-500 text-xs mt-1">Please log into settings to program upcoming matches.</p>
             </div>
 
             <div id="active-match-stage" class="bg-slate-900 border-2 border-slate-800 rounded-3xl p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950 hidden">
                 
                 <div class="flex items-center justify-between border-b border-slate-800/60 pb-4 mb-6">
-                    <span class="text-red-400 font-bold tracking-widest text-[10px] uppercase bg-red-500/5 border border-red-500/20 px-3 py-1 rounded-full flex items-center gap-1.5 live-pulse">
-                        ● TRANSMISSION ACTIVE
+                    <span id="display-status-pill" class="font-bold tracking-widest text-[10px] uppercase border px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span> <span id="display-status-text">UPCOMING TRANSMISSION</span>
                     </span>
-                    <span id="display-time-tag" class="text-slate-400 font-black font-mono text-xs bg-slate-950 border border-slate-800 px-3 py-1 rounded-lg">LIVE</span>
+                    <span id="display-time-tag" class="text-slate-400 font-black font-mono text-xs bg-slate-950 border border-slate-800 px-3 py-1 rounded-lg">COUNTDOWN</span>
+                </div>
+
+                <div id="countdown-wrap" class="w-full text-center mb-2 hidden">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 block mb-1">Kickoff Countdown</span>
+                    <span id="countdown-timer" class="font-mono text-3xl font-black text-amber-400 tracking-wider bg-slate-950 px-6 py-2 rounded-2xl border border-slate-800/80 inline-block">00:00:00</span>
                 </div>
 
                 <div class="flex items-center justify-center gap-8 md:gap-16 py-6">
                     <div class="flex flex-col items-center gap-3 flex-1">
                         <div class="w-28 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-lg flex items-center justify-center">
-                            <img id="flag-home" src="" class="w-full h-full object-cover">
+                            <img id="flag-home" src="" class="w-full h-full object-cover hidden" onload="this.classList.remove('hidden')">
                         </div>
                         <span id="name-home" class="text-sm font-black tracking-wider text-center text-slate-200 uppercase truncate max-w-[150px]">Home</span>
                     </div>
@@ -70,7 +72,7 @@
 
                     <div class="flex flex-col items-center gap-3 flex-1">
                         <div class="w-28 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-lg flex items-center justify-center">
-                            <img id="flag-away" src="" class="w-full h-full object-cover">
+                            <img id="flag-away" src="" class="w-full h-full object-cover hidden" onload="this.classList.remove('hidden')">
                         </div>
                         <span id="name-away" class="text-sm font-black tracking-wider text-center text-slate-200 uppercase truncate max-w-[150px]">Away</span>
                     </div>
@@ -139,6 +141,37 @@
         let activeHls = null;
         let cachedMatchesStore = [];
 
+        // Comprehensive lookup table to convert standard naming systems into correct ISO-A2 codes safely
+        const countryCodes = {
+            "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
+            "bahamas": "bs", "bahrain": "bh", "bangladesh": "bd", "barbados": "bb", "belarus": "by", "belgium": "be", "belize": "bz", "benin": "bj", "bhutan": "bt", "bolivia": "bo",
+            "bosnia and herzegovina": "ba", "bosnia": "ba", "botswana": "bw", "brazil": "br", "brunei": "bn", "bulgaria": "bg", "burkina faso": "bf", "burundi": "bi", "cambodia": "kh",
+            "cameroon": "cm", "canada": "ca", "cape verde": "cv", "central african republic": "cf", "chad": "td", "chile": "cl", "china": "cn", "colombia": "co", "comoros": "km",
+            "congo": "cg", "costa rica": "cr", "croatia": "hr", "cuba": "cu", "cyprus": "cy", "czechia": "cz", "czech republic": "cz", "denmark": "dk", "djibouti": "dj", "dominica": "dm",
+            "dominican republic": "do", "ecuador": "ec", "egypt": "eg", "el salvador": "sv", "equatorial guinea": "gq", "eritrea": "er", "estonia": "ee", "eswatini": "sz", "ethiopia": "et",
+            "fiji": "fj", "finland": "fi", "france": "fr", "gabon": "ga", "gambia": "gm", "georgia": "ge", "germany": "de", "ghana": "gh", "greece": "gr", "grenada": "gd", "guatemala": "gt",
+            "guinea": "gn", "guinea-bissau": "gw", "guyana": "gy", "haiti": "ht", "honduras": "hn", "hungary": "hu", "iceland": "is", "india": "in", "indonesia": "id", "iran": "ir",
+            "iraq": "iq", "ireland": "ie", "israel": "il", "italy": "it", "jamaica": "jm", "japan": "jp", "jordan": "jo", "kazakhstan": "kz", "kenya": "ke", "kiribati": "ki",
+            "kuwait": "kw", "kyrgyzstan": "kg", "laos": "la", "latvia": "lv", "lebanon": "lb", "lesotho": "ls", "liberia": "lr", "libya": "ly", "liechtenstein": "li", "lithuania": "lt",
+            "luxembourg": "lu", "madagascar": "mg", "malawi": "mw", "malaysia": "my", "maldives": "mv", "mali": "ml", "malta": "mt", "marshall islands": "mh", "mauritania": "mr",
+            "mauritius": "mu", "mexico": "mx", "micronesia": "fm", "moldova": "md", "monaco": "mc", "mongolia": "mn", "montenegro": "me", "morocco": "ma", "mozambique": "mz",
+            "myanmar": "mm", "namibia": "na", "nauru": "nr", "nepal": "np", "netherlands": "nl", "new zealand": "nz", "nicaragua": "ni", "niger": "ne", "nigeria": "ng", "north korea": "kp",
+            "north macedonia": "mk", "norway": "no", "oman": "om", "pakistan": "pk", "palau": "pw", "panama": "pa", "papua new guinea": "pg", "paraguay": "py", "peru": "pe",
+            "philippines": "ph", "poland": "pl", "portugal": "pt", "qatar": "qa", "romania": "ro", "russia": "ru", "rwanda": "rw", "saint kitts and nevis": "kn", "saint lucia": "lc",
+            "saint vincent": "vc", "samoa": "ws", "san marino": "sm", "sao tome and principe": "st", "saudi arabia": "sa", "senegal": "sn", "serbia": "rs", "seychelles": "sc",
+            "sierra leone": "sl", "singapore": "sg", "slovakia": "sk", "slovenia": "si", "solomon islands": "sb", "somalia": "so", "south africa": "za", "south korea": "kr",
+            "south sudan": "ss", "spain": "es", "sri lanka": "lk", "sudan": "sd", "suriname": "sr", "sweden": "se", "switzerland": "ch", "syria": "sy", "taiwan": "tw", "tajikistan": "tj",
+            "tanzania": "tz", "thailand": "th", "timor-leste": "tl", "togo": "tg", "tonga": "to", "trinidad and tobago": "tt", "tunisia": "tn", "turkey": "tr", "turkmenistan": "tm",
+            "tuvalu": "tv", "uganda": "ug", "ukraine": "ua", "united arab emirates": "ae", "united kingdom": "gb", "england": "gb", "scotland": "gb", "wales": "gb", "united states": "us", "usa": "us",
+            "uruguay": "uy", "uzbekistan": "uz", "vanuatu": "vu", "vatican city": "va", "venezuela": "ve", "vietnam": "vn", "yemen": "ye", "zambia": "zm", "zimbabwe": "zw"
+        };
+
+        function getFlagUrl(countryName) {
+            const clean = countryName.trim().toLowerCase();
+            const code = countryCodes[clean] || "un";
+            return `https://flagcdn.com/w160/${code}.png`;
+        }
+
         function checkGatePassword() {
             if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
                 document.getElementById('gate-screen').classList.add('hidden');
@@ -166,7 +199,7 @@
                 timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
             }).format(currentSGT);
             
-            evaluateActiveTimelineState(); // Continually verify what match belongs on screen right now
+            evaluateActiveTimelineState();
         }
         setInterval(runClock, 1000);
 
@@ -189,10 +222,9 @@
         function initPortal() {
             runClock();
             syncScheduleStore();
-            setInterval(syncScheduleStore, 15000);
+            setInterval(syncScheduleStore, 30000);
         }
 
-        // BACKEND SYNCHRONIZER
         async function syncScheduleStore() {
             try {
                 const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?select=*&order=start_time.asc`, {
@@ -204,7 +236,7 @@
             } catch (err) { console.error(err); }
         }
 
-        // EVALUATE CURRENT TIME VERSUS DATABASE CHRONOLOGY
+        // EVALUATE CURRENT TIMELINE CHRONOLOGY ALWAYS SELECTION NEXT CLOSEST
         function evaluateActiveTimelineState() {
             if (!cachedMatchesStore || cachedMatchesStore.length === 0) {
                 document.getElementById('no-active-stage').classList.remove('hidden');
@@ -213,30 +245,44 @@
             }
 
             const now = new Date().getTime();
-            let currentActiveMatch = null;
-            let upcomingMatch = null;
+            let displayTargetMatch = null;
+            let isLiveCurrently = false;
 
+            // Look for a live match running inside a 2.5 hour schedule block window
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
-                const matchDurationLimit = mTime + (2.5 * 60 * 60 * 1000); // 2.5 hour window block per match allocation
+                const matchDurationLimit = mTime + (2.5 * 60 * 60 * 1000);
 
                 if (now >= mTime && now <= matchDurationLimit) {
-                    currentActiveMatch = cachedMatchesStore[i];
+                    displayTargetMatch = cachedMatchesStore[i];
+                    isLiveCurrently = true;
                     break;
-                } else if (mTime > now && !upcomingMatch) {
-                    upcomingMatch = cachedMatchesStore[i];
                 }
             }
 
-            // RENDERING DISPATCH
-            if (currentActiveMatch) {
+            // If no match is live, find the absolute nearest upcoming future scheduled item
+            if (!displayTargetMatch) {
+                for (let i = 0; i < cachedMatchesStore.length; i++) {
+                    const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
+                    if (mTime > now) {
+                        displayTargetMatch = cachedMatchesStore[i];
+                        break;
+                    }
+                }
+            }
+
+            // Fallback: If ALL matches are finished, stick to the absolute last completed match instead of blanking out
+            if (!displayTargetMatch && cachedMatchesStore.length > 0) {
+                displayTargetMatch = cachedMatchesStore[cachedMatchesStore.length - 1];
+            }
+
+            if (displayTargetMatch) {
                 document.getElementById('no-active-stage').classList.add('hidden');
-                const stage = document.getElementById('active-match-stage');
-                stage.classList.remove('hidden');
+                document.getElementById('active-match-stage').classList.remove('hidden');
 
                 let c1 = "Home Team", c2 = "Away Team";
-                if (currentActiveMatch.title.toLowerCase().includes('vs')) {
-                    const parts = currentActiveMatch.title.split(/vs/i);
+                if (displayTargetMatch.title.toLowerCase().includes('vs')) {
+                    const parts = displayTargetMatch.title.split(/vs/i);
                     c1 = parts[0].trim(); c2 = parts[1].trim();
                 }
 
@@ -244,26 +290,63 @@
                 document.getElementById('name-away').innerText = c2;
                 document.getElementById('stage-match-title').innerHTML = `${c1} <span class="text-blue-500">VS</span> ${c2}`;
                 
-                // BULLETPROOF FLAG API MAPPING ENGINE
-                document.getElementById('flag-home').src = `https://openflags.net/flag/${encodeURIComponent(c1.toLowerCase())}.png`;
-                document.getElementById('flag-away').src = `https://openflags.net/flag/${encodeURIComponent(c2.toLowerCase())}.png`;
+                // Mount new Flag URL assets mapping
+                document.getElementById('flag-home').src = getFlagUrl(c1);
+                document.getElementById('flag-away').src = getFlagUrl(c2);
 
-                const formattedKickoff = new Date(currentActiveMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                document.getElementById('display-time-tag').innerText = `STARTED AT ${formattedKickoff} SGT`;
+                const badgePill = document.getElementById('display-status-pill');
+                const badgeText = document.getElementById('display-status-text');
+                const countdownWrap = document.getElementById('countdown-wrap');
+                const formattedKickoff = new Date(displayTargetMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                document.getElementById('stage-launch-btn').onclick = () => {
-                    bootMatchPlayer(currentActiveMatch.url, currentActiveMatch.title);
-                };
+                if (isLiveCurrently) {
+                    // Match is active
+                    badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-red-500/5 border border-red-500/20 text-red-400 px-3 py-1 rounded-full flex items-center gap-1.5 live-pulse";
+                    badgeText.innerText = "● TRANSMISSION ACTIVE";
+                    document.getElementById('display-time-tag').innerText = `STARTED AT ${formattedKickoff} SGT`;
+                    countdownWrap.classList.add('hidden');
+                    
+                    document.getElementById('stage-launch-btn').disabled = false;
+                    document.getElementById('stage-launch-btn').className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                    document.getElementById('stage-launch-btn').innerText = "Launch Main Feed Transmissions ↗";
+                    document.getElementById('stage-launch-btn').onclick = () => {
+                        bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title);
+                    };
+                } else {
+                    // Match is upcoming or concluded
+                    const targetKickoffTime = new Date(displayTargetMatch.start_time).getTime();
+                    const diff = targetKickoffTime - now;
+
+                    if (diff > 0) {
+                        // Upcoming match countdown execution tracking block
+                        badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-amber-500/5 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full flex items-center gap-1.5";
+                        badgeText.innerText = "UPCOMING MATCH STAGE";
+                        document.getElementById('display-time-tag').innerText = `KICKOFF AT ${formattedKickoff} SGT`;
+                        countdownWrap.classList.remove('hidden');
+
+                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                        document.getElementById('countdown-timer').innerText = 
+                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                        document.getElementById('stage-launch-btn').disabled = true;
+                        document.getElementById('stage-launch-btn').className = "w-full bg-slate-800 text-slate-500 border border-slate-700/50 font-black py-4 rounded-2xl text-xs tracking-widest uppercase cursor-not-allowed";
+                        document.getElementById('stage-launch-btn').innerText = "Feed Standby Mode (Locked)";
+                    } else {
+                        // Concluded configuration setup fallback
+                        badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-slate-950 border border-slate-800 text-slate-500 px-3 py-1 rounded-full flex items-center gap-1.5";
+                        badgeText.innerText = "MATCH CONCLUDED";
+                        document.getElementById('display-time-tag').innerText = "FULL TIME";
+                        countdownWrap.classList.add('hidden');
+                        document.getElementById('stage-launch-btn').disabled = true;
+                        document.getElementById('stage-launch-btn').className = "w-full bg-slate-800 text-slate-500 border border-slate-700/50 font-black py-4 rounded-2xl text-xs tracking-widest uppercase cursor-not-allowed";
+                        document.getElementById('stage-launch-btn').innerText = "Transmission Offline";
+                    }
+                }
             } else {
                 document.getElementById('active-match-stage').classList.add('hidden');
                 document.getElementById('no-active-stage').classList.remove('hidden');
-                
-                if (upcomingMatch) {
-                    const nextTime = new Date(upcomingMatch.start_time).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', hour12: false });
-                    document.getElementById('countdown-banner').innerText = `Next Transmission: ${upcomingMatch.title} at ${nextTime} SGT`;
-                } else {
-                    document.getElementById('countdown-banner').innerText = "Awaiting Schedule Programming Inputs...";
-                }
             }
         }
 
@@ -284,7 +367,6 @@
             });
         }
 
-        // REPO DATA DEPLOYMENTS
         async function deployNewMatch() {
             const home = document.getElementById('match-home').value.trim();
             const away = document.getElementById('match-away').value.trim();
