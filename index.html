@@ -50,6 +50,33 @@
         @keyframes beamFlare {
             to { transform: scale(1); }
         }
+
+        /* --- TROPHY MATCH OPEN ANIMATIONS --- */
+        .trophy-rise {
+            transform: translateY(120px) scale(0.4);
+            opacity: 0;
+            animation: riseUp 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.3s;
+        }
+        @keyframes riseUp {
+            0% { transform: translateY(120px) scale(0.4); opacity: 0; filter: brightness(0.5); }
+            60% { opacity: 1; filter: brightness(1.2); }
+            100% { transform: translateY(0) scale(1); opacity: 1; filter: brightness(1); }
+        }
+        .aura-spin {
+            transform-origin: center;
+            animation: spinRing 8s linear infinite;
+        }
+        @keyframes spinRing {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .beam-shimmer {
+            animation: shimmer 3s ease-in-out infinite alternate;
+        }
+        @keyframes shimmer {
+            0% { opacity: 0.2; }
+            100% { opacity: 0.7; }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600 relative">
@@ -58,7 +85,7 @@
         <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl max-w-md w-full text-center transform scale-100 transition-all">
             <div class="w-16 h-16 bg-gradient-to-tr from-amber-600 to-yellow-400 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-amber-600/20">⚽</div>
             <h1 class="text-2xl font-black text-slate-100 tracking-wider uppercase">Arena World Cup Studio</h1>
-            <p class="text-slate-400 text-xs mt-1 mb-6">Enter secure access code to unlock dynamic stream core</p>
+            <p class="text-slate-400 text-xs mt-1 mb-6">Enter secure access code to unlock your streaming portal</p>
             <input type="password" id="gate-password" value="football123" placeholder="Access Password" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500 transition-all focus:ring-2 focus:ring-amber-500/10">
             <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-amber-600/10 tracking-wide uppercase text-xs">Authorize Entry</button>
         </div>
@@ -75,33 +102,25 @@
                     <line x1="400" y1="0" x2="400" y2="400" />
                     <line x1="600" y1="0" x2="600" y2="400" />
                 </g>
-                
                 <ellipse cx="400" cy="320" rx="260" ry="40" fill="none" stroke="#1e293b" stroke-width="2" />
                 <ellipse cx="400" cy="320" rx="220" ry="30" fill="none" stroke="rgba(59, 130, 246, 0.2)" stroke-width="1" />
-                
                 <path d="M 120,280 C 120,120 680,120 680,280" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" class="sketch-line" />
                 <path d="M 100,290 C 100,90 700,90 700,290" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5,5" class="sketch-line" />
-                
                 <path d="M 170,295 C 170,160 630,160 630,295" fill="none" stroke="#1d4ed8" stroke-width="2" class="sketch-line-fast" />
                 <path d="M 220,305 C 220,200 580,200 580,305" fill="none" stroke="#1e40af" stroke-width="1.5" class="sketch-line-fast" />
-                
                 <line x1="180" y1="210" x2="160" y2="293" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
                 <line x1="270" y1="160" x2="250" y2="305" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
                 <line x1="400" y1="140" x2="400" y2="310" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,4" class="sketch-line" />
                 <line x1="530" y1="160" x2="550" y2="305" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
                 <line x1="620" y1="210" x2="640" y2="293" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
-                
                 <path d="M 120,195 Q 400,120 680,195" fill="none" stroke="#60a5fa" stroke-width="3" class="sketch-line" />
-                
                 <g class="stadium-glow">
                     <polygon points="150,180 0,0 80,0" fill="url(#lightGradient)" opacity="0.35" />
                     <polygon points="650,180 800,0 720,0" fill="url(#lightGradient)" opacity="0.35" />
                     <ellipse cx="400" cy="240" rx="180" ry="70" fill="url(#centerWash)" opacity="0.15" />
                 </g>
-
                 <circle cx="150" cy="180" r="5" fill="#f59e0b" class="stadium-flare" />
                 <circle cx="650" cy="180" r="5" fill="#f59e0b" class="stadium-flare" />
-
                 <defs>
                     <linearGradient id="lightGradient" x1="0" y1="1" x2="0" y2="0">
                         <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
@@ -113,9 +132,57 @@
                     </radialGradient>
                 </defs>
             </svg>
-            
             <div class="mt-4 text-center">
-                <h3 class="text-[10px] font-mono tracking-[0.3em] uppercase text-blue-400 font-bold animate-pulse">Constructing Digital Arena Engine...</h3>
+                <h3 class="text-[10px] font-mono tracking-[0.3em] uppercase text-blue-400 font-bold animate-pulse">Loading Arena Studio...</h3>
+            </div>
+        </div>
+    </div>
+
+    <div id="match-launch-overlay" class="fixed inset-0 bg-slate-950 z-50 hidden opacity-0 transition-opacity duration-700 flex flex-col items-center justify-center pointer-events-none">
+        <div class="w-full max-w-2xl px-6 flex flex-col items-center relative">
+            <svg viewBox="0 0 600 600" class="w-full max-w-[450px] h-auto">
+                <g stroke="rgba(245, 158, 11, 0.15)" stroke-width="1.5">
+                    <circle cx="300" cy="480" r="140" fill="none" stroke-dasharray="4,4" class="aura-spin"/>
+                    <circle cx="300" cy="480" r="190" fill="none" class="aura-spin" style="animation-direction: reverse; animation-duration: 12s;"/>
+                    <ellipse cx="300" cy="480" rx="240" ry="40" fill="none" stroke="rgba(245,158,11,0.3)" stroke-width="2"/>
+                </g>
+
+                <g class="beam-shimmer">
+                    <polygon points="300,100 220,480 380,480" fill="url(#trophyBeam)" opacity="0.3" />
+                </g>
+
+                <g class="trophy-rise">
+                    <path d="M 260,470 Q 300,475 340,470 L 345,485 Q 300,492 255,485 Z" fill="#d97706"/>
+                    <path d="M 265,455 Q 300,460 335,455 L 340,470 Q 300,475 260,470 Z" fill="#f59e0b"/>
+                    <path d="M 270,442 Q 300,446 330,442 L 335,455 Q 300,460 265,455 Z" fill="#10b981"/>
+                    <path d="M 273,430 Q 300,434 327,430 L 330,442 Q 300,446 270,442 Z" fill="#f59e0b"/>
+                    <path d="M 275,418 Q 300,422 325,418 L 327,430 Q 300,434 273,430 Z" fill="#10b981"/>
+
+                    <path d="M 275,418 Q 300,410 325,418 L 335,320 Q 300,340 265,320 Z" fill="url(#goldGrad)"/>
+                    
+                    <path d="M 265,320 C 250,290 260,250 280,230 C 290,245 295,270 285,290 Z" fill="#b45309"/>
+                    <path d="M 335,320 C 350,290 340,250 320,230 C 310,245 305,270 315,290 Z" fill="#b45309"/>
+
+                    <circle cx="300" cy="210" r="45" fill="url(#goldGrad)" stroke="#f59e0b" stroke-width="1"/>
+                    <path d="M 270,200 Q 290,190 310,225 M 315,185 Q 330,205 340,195 M 280,225 Q 300,235 325,220" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round"/>
+                </g>
+
+                <defs>
+                    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#fbbf24"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#b45309"/>
+                    </linearGradient>
+                    <linearGradient id="trophyBeam" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0"/>
+                        <stop offset="70%" stop-color="#fbbf24" stop-opacity="0.4"/>
+                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="text-center -mt-4">
+                <h2 id="launch-overlay-title" class="text-2xl font-black uppercase tracking-widest text-amber-400">CONNECTING TO STAGE</h2>
+                <p class="text-slate-400 text-xs mt-1 uppercase tracking-wide">Preparing live broadcast presentation</p>
             </div>
         </div>
     </div>
@@ -141,8 +208,8 @@
             
             <main id="page-home-empty" class="fade-view absolute inset-x-0 mx-auto max-w-md text-center p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-xl hidden">
                 <span class="text-4xl block mb-4">💤</span>
-                <h2 class="text-sm font-black uppercase tracking-wider text-slate-300">Timeline Core Empty</h2>
-                <p class="text-slate-500 text-xs mt-1">Access the settings terminal to schedule your incoming fixture links.</p>
+                <h2 class="text-sm font-black uppercase tracking-wider text-slate-300">Timeline Empty</h2>
+                <p class="text-slate-500 text-xs mt-1">Access the settings terminal to schedule your upcoming matches.</p>
             </main>
 
             <main id="page-home" class="fade-view max-w-4xl mx-auto p-6 w-full hidden">
@@ -159,7 +226,7 @@
                     </div>
 
                     <div id="countdown-wrap" class="w-full text-center mb-4 hidden transform transition-transform">
-                        <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 block mb-1">Live Feed Countdown</span>
+                        <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 block mb-1">Match Countdown</span>
                         <span id="countdown-timer" class="font-mono text-4xl font-black text-amber-400 tracking-wider bg-slate-950/80 px-6 py-2.5 rounded-2xl border border-slate-800 inline-block shadow-lg">00:00:00</span>
                     </div>
 
@@ -186,7 +253,7 @@
                     </div>
 
                     <button id="stage-launch-btn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20">
-                        Launch Stream Portal ↗
+                        Watch Transmission Feed ↗
                     </button>
                 </div>
             </main>
@@ -198,8 +265,8 @@
                     </div>
                     <div class="p-5 bg-slate-950 border-t border-slate-900 flex items-center justify-between">
                         <div>
-                            <h2 id="player-title" class="text-sm font-bold text-white uppercase tracking-wide">Live Stream Frame</h2>
-                            <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2 py-0.5 border border-emerald-500/20 rounded-md uppercase mt-1 inline-block tracking-widest">Active Link Feed</span>
+                            <h2 id="player-title" class="text-sm font-bold text-white uppercase tracking-wide">Live Match Stream</h2>
+                            <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2 py-0.5 border border-emerald-500/20 rounded-md uppercase mt-1 inline-block tracking-widest">Active Feed</span>
                         </div>
                     </div>
                 </div>
@@ -208,8 +275,8 @@
             <main id="page-admin" class="fade-view max-w-xl mx-auto p-6 w-full hidden">
                 <div class="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-6 shadow-2xl relative">
                     <div>
-                        <h2 class="text-xs font-black uppercase tracking-wider text-blue-400 mb-1">📅 Mass Scheduler Pipeline</h2>
-                        <p class="text-slate-500 text-[11px] mb-4">Input structural match attributes. Conversions track instantly.</p>
+                        <h2 class="text-xs font-black uppercase tracking-wider text-blue-400 mb-1">📅 Match Scheduler Pipeline</h2>
+                        <p class="text-slate-500 text-[11px] mb-4">Input match details below to update the system instantly.</p>
                         
                         <div class="space-y-3">
                             <div class="grid grid-cols-2 gap-3">
@@ -228,7 +295,7 @@
                     <hr class="border-slate-800/60">
 
                     <div>
-                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2.5">Timeline Queue Inventory</h3>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2.5">Scheduled Queue</h3>
                         <div id="admin-schedule-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
                     </div>
                 </div>
@@ -249,7 +316,7 @@
             <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="text-sm">📅</span>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Upcoming Stages</h3>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Upcoming Match Stages</h3>
                 </div>
                 <button onclick="toggleUpcomingPanel(false)" class="text-slate-500 hover:text-white transition-colors bg-slate-950 hover:bg-slate-800 h-6 w-6 flex items-center justify-center rounded-lg text-xs font-bold border border-slate-800">×</button>
             </div>
@@ -300,11 +367,9 @@
                 const gate = document.getElementById('gate-screen');
                 gate.classList.add('opacity-0', 'pointer-events-none');
                 
-                // Trigger Blueprint Sketch Intro Overlay
                 const intro = document.getElementById('intro-overlay');
                 intro.classList.remove('hidden');
 
-                // Leave the blueprint sketching for 3.8 seconds, then crossfade to app core
                 setTimeout(() => {
                     intro.classList.add('opacity-0');
                     const app = document.getElementById('main-app');
@@ -514,15 +579,15 @@
                 const actionBtn = document.getElementById('stage-launch-btn');
                 const formattedKickoff = new Date(displayTargetMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                actionBtn.onclick = () => { bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title); };
+                actionBtn.onclick = () => { triggerCreativeTrophyTransition(displayTargetMatch.url, displayTargetMatch.title); };
 
                 if (isLiveCurrently) {
                     badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-red-500/5 border border-red-500/20 text-red-400 px-3 py-1 rounded-full flex items-center gap-1.5 live-pulse";
-                    badgeText.innerText = "● TRANSMISSION ACTIVE";
+                    badgeText.innerText = "● LIVE NOW";
                     document.getElementById('display-time-tag').innerText = `STARTED AT ${formattedKickoff} SGT`;
                     countdownWrap.classList.add('hidden');
                     actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-blue-600/10 cursor-pointer active:scale-95";
-                    actionBtn.innerText = "Watch Live Transmission ↗";
+                    actionBtn.innerText = "Watch Transmission Feed ↗";
                 } else {
                     const targetKickoffTime = new Date(displayTargetMatch.start_time).getTime();
                     const diff = targetKickoffTime - now;
@@ -550,6 +615,32 @@
                     }
                 }
             }
+        }
+
+        function triggerCreativeTrophyTransition(url, title) {
+            const overlay = document.getElementById('match-launch-overlay');
+            const headerTitle = document.getElementById('launch-overlay-title');
+            
+            headerTitle.innerText = title.toUpperCase();
+            overlay.classList.remove('hidden');
+            
+            // Reflow trigger for transition
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+            }, 50);
+
+            // Hold intermission screen for 2.8 seconds, then spin down into video element frame
+            setTimeout(() => {
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0');
+                
+                bootMatchPlayer(url, title);
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 700);
+            }, 2800);
         }
 
         function renderAdminControlList(data) {
@@ -596,18 +687,18 @@
                     document.getElementById('match-url').value = '';
                     syncScheduleStore();
                 }
-            } catch (err) { alert("Deployment connection rejected."); }
+            } catch (err) { alert("Connection rejected."); }
         }
 
         async function strikeMatch(id) {
-            if (!confirm("Purge selected block timeline profile?")) return;
+            if (!confirm("Remove selected match?")) return;
             try {
                 const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?id=eq.${id}`, {
                     method: 'DELETE',
                     headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
                 });
                 if (res.ok) syncScheduleStore();
-            } catch (err) { alert("Purge failed."); }
+            } catch (err) { alert("Action failed."); }
         }
 
         function bootMatchPlayer(url, title) {
