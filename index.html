@@ -3,156 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Live Arena</title>
+    <title>Arena Scheduler Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        @keyframes marquee {
-            0% { transform: translate3d(100%, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
-        .animate-ticker {
-            display: inline-block;
-            white-space: nowrap;
-            animation: marquee 25s linear infinite;
-        }
         .live-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: .5; transform: scale(0.95); }
+            50% { opacity: .5; transform: scale(0.98); }
         }
     </style>
 </head>
-<body class="bg-slate-950 text-white font-sans min-h-screen pb-20">
+<body class="bg-slate-950 text-white font-sans min-h-screen">
 
     <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4">
         <div class="bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl max-w-md w-full text-center">
-            <h1 class="text-2xl font-black text-emerald-500 mb-2 uppercase tracking-wide">⚽ Arena Live</h1>
-            <p class="text-slate-400 text-xs mb-6">Enter password to access match transmission</p>
-            <input type="password" id="gate-password" placeholder="Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-emerald-500">
-            <button onclick="checkGatePassword()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl transition-all">Access Dashboard</button>
-            <p id="gate-error" class="text-red-500 text-xs mt-3 hidden">⚠️ Incorrect password.</p>
+            <h1 class="text-2xl font-black text-amber-500 mb-2 uppercase tracking-wider">⚽ Arena Platform</h1>
+            <p class="text-slate-400 text-xs mb-6">Enter access code to load the scheduler system</p>
+            <input type="password" id="gate-password" placeholder="Access Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500">
+            <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 font-bold py-3 rounded-xl transition-all">Enter Platform</button>
+            <p id="gate-error" class="text-red-500 text-xs mt-3 hidden">⚠️ Incorrect credentials.</p>
         </div>
     </div>
 
-    <div id="main-app" class="hidden">
+    <div id="main-app" class="hidden flex flex-col min-h-screen">
         
-        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
                 <span class="text-xl">🏆</span>
-                <h1 class="text-md font-black tracking-wider text-slate-100">ARENA LIVE</h1>
+                <h1 class="text-md font-black tracking-widest text-slate-100">ARENA MATCHROOM</h1>
             </div>
             <div class="flex items-center gap-4">
-                <div class="bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs font-mono text-emerald-400">
-                    SGT: <span id="gmt-clock">00:00:00</span>
+                <div class="bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs font-mono text-amber-400">
+                    SGT (GMT+8): <span id="sng-clock">00:00:00</span>
                 </div>
-                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden">← Home</button>
-                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-950 hover:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-amber-400">ADMIN</button>
+                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden">← Back</button>
+                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-950 hover:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-blue-400 uppercase tracking-wide">Manage Matches</button>
             </div>
         </header>
 
-        <main id="page-home" class="max-w-7xl mx-auto p-6 view-page space-y-12">
-            <div>
-                <h2 class="text-lg font-bold uppercase tracking-wider text-slate-300 mb-4">Live Match Feeds</h2>
-                <div id="streams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    </div>
+        <main id="page-home" class="max-w-6xl mx-auto p-6 flex-1 w-full space-y-6">
+            <div class="border-b border-slate-900 pb-2 flex justify-between items-center">
+                <h2 class="text-xs font-black uppercase tracking-widest text-slate-400">Scheduled Transmissions</h2>
+                <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-500 border border-slate-800 uppercase font-mono">Status: Connected</span>
             </div>
 
-            <div class="space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-900 pb-2">
-                    <h3 class="text-lg font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-red-500 live-pulse"></span> Global Match Scores
-                    </h3>
-                    <button onclick="fetchLiveScores()" class="bg-slate-900 hover:bg-slate-800 text-xs font-bold px-3 py-1 rounded-lg border border-slate-800">🔄 Refresh</button>
-                </div>
-                
-                <div id="scores-loading" class="text-center py-10 text-slate-600 text-xs font-mono uppercase">Syncing real-time network fixtures...</div>
-                <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
-                    </div>
+            <div id="schedule-empty-log" class="text-center py-20 text-slate-600 text-xs font-mono uppercase">
+                No matches currently slated in database core.
             </div>
+
+            <div id="schedule-display-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                </div>
         </main>
 
-        <main id="page-player" class="max-w-5xl mx-auto p-6 view-page hidden">
+        <main id="page-player" class="max-w-5xl mx-auto p-6 w-full hidden">
             <div class="bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
                 <div class="aspect-video w-full bg-black">
                     <video id="video-element" class="w-full h-full" controls autoplay playsinline></video>
                 </div>
                 <div class="p-4 bg-slate-950 flex items-center justify-between">
                     <div>
-                        <h2 id="player-title" class="text-md font-bold text-white">Stream</h2>
-                        <span id="player-quality" class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded uppercase mt-1 inline-block">HD</span>
+                        <h2 id="player-title" class="text-sm font-bold text-white">Stream Loading...</h2>
+                        <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2 py-0.5 border border-emerald-500/20 rounded uppercase mt-1 inline-block">Transmission Active</span>
                     </div>
                 </div>
             </div>
         </main>
 
-        <main id="page-admin" class="max-w-xl mx-auto p-6 view-page hidden">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                
+        <main id="page-admin" class="max-w-xl mx-auto p-6 w-full hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
                 <div>
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">📢 Update Ticker Ribbon</h2>
-                    <div class="flex gap-2">
-                        <input type="text" id="admin-ticker-input" placeholder="Enter marquee text..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
-                        <button onclick="updateTickerText()" class="bg-amber-500 text-black font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider">Save</button>
-                    </div>
-                </div>
-
-                <hr class="border-slate-800">
-
-                <div>
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3">🛠️ Publish Live Stream Channel</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wider text-blue-400 mb-1">📅 Match Deployment Terminal</h2>
+                    <p class="text-slate-500 text-[11px] mb-4">Enter match details to automatically extract flag resources.</p>
+                    
                     <div class="space-y-3">
-                        <input type="text" id="stream-title" placeholder="Stream Title (e.g., Caze TV)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
-                        <select id="stream-quality" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none">
-                            <option value="1080p HD">1080p HD</option>
-                            <option value="720p SD">720p SD</option>
-                            <option value="4K UHD">4K UHD</option>
-                        </select>
-                        <input type="text" id="stream-url" placeholder="M3U8 Stream URL" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-mono text-white focus:outline-none">
-                        <button onclick="addStream()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider text-white">Publish Broadcast</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="match-home" placeholder="Home Country (e.g., Mexico)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                            <input type="text" id="match-away" placeholder="Away Country (e.g., South Korea)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                        <input type="text" id="match-time" placeholder="Match Time / Info (e.g., 20 June - 09:00 SGT)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <input type="text" id="match-url" placeholder="M3U8 Stream Source URL" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500">
+                        <button onclick="deployNewMatch()" class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-2.5 rounded-xl text-xs uppercase tracking-widest text-white transition-all shadow-md">Deploy Match Frame</button>
                     </div>
                 </div>
 
                 <hr class="border-slate-800">
 
                 <div>
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Active Channels</h3>
-                    <div id="admin-streams-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Active Slate Pipeline</h3>
+                    <div id="admin-schedule-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
                 </div>
             </div>
         </main>
-
-        <div class="fixed bottom-0 left-0 right-0 h-10 bg-slate-950 border-t border-slate-800 flex items-center overflow-hidden z-40">
-            <div class="bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider px-3 h-full flex items-center whitespace-nowrap">
-                📢 ALERT
-            </div>
-            <div class="w-full overflow-hidden flex items-center bg-slate-900 h-full">
-                <div id="live-ticker-text" class="animate-ticker text-xs font-medium text-amber-400 uppercase tracking-wide">
-                    Syncing with database core...
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script>
+        // TARGET CONFIGURATION
         const SUPABASE_CONFIG = {
             url: "https://cjsngpngbgomdzovzteq.supabase.co",
             anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc25ncG5nYmdvbWR6b3Z6dGVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2ODg1NTcsImV4cCI6MjA5NzI2NDU1N30.zj0IDkiaxyRnMwIg2Uk1AaphLRfHA8UwPd7_WFJK47s"
         };
-
-        const APP_CONFIG = { gatePassword: "football123", adminPassword: "admin123" };
-        let activeHlsInstance = null;
+        const ACCESS_KEYS = { gate: "football123", admin: "admin123" };
+        let activeHls = null;
 
         function checkGatePassword() {
-            if (document.getElementById('gate-password').value === APP_CONFIG.gatePassword) {
+            if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
                 document.getElementById('gate-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
-                initDashboard();
+                initPortal();
             } else {
-                showElementError('gate-error');
+                const err = document.getElementById('gate-error');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 3000);
             }
         }
 
@@ -160,282 +124,234 @@
             if (!document.getElementById('page-admin').classList.contains('hidden')) {
                 showPage('home'); return;
             }
-            if (prompt("Enter Admin Password:") === APP_CONFIG.adminPassword) {
+            if (prompt("Enter Terminal Passkey:") === ACCESS_KEYS.admin) {
                 showPage('admin');
             } else {
-                alert("Incorrect Password.");
+                alert("Authorization Denied.");
             }
         }
 
-        function updateGMT8Clock() {
-            const now = new Date();
-            document.getElementById('gmt-clock').innerText = new Intl.DateTimeFormat('en-US', {
+        function runClock() {
+            document.getElementById('sng-clock').innerText = new Intl.DateTimeFormat('en-US', {
                 timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-            }).format(now);
+            }).format(new Date());
         }
-        setInterval(updateGMT8Clock, 1000);
+        setInterval(runClock, 1000);
 
-        function showPage(pageId) {
-            if (pageId !== 'player') destroyVideoPlayer();
-            document.querySelectorAll('.view-page').forEach(page => page.classList.add('hidden'));
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+        function showPage(id) {
+            if (id !== 'player') closeMediaPipeline();
+            document.querySelectorAll('main').forEach(m => m.classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
 
-            const btnHome = document.getElementById('btn-home');
-            const btnAdmin = document.getElementById('btn-admin-trigger');
-            if (pageId === 'home') {
-                btnHome.classList.add('hidden');
-                btnAdmin.innerText = "ADMIN";
+            const backBtn = document.getElementById('btn-home');
+            const adminBtn = document.getElementById('btn-admin-trigger');
+            if (id === 'home') {
+                backBtn.classList.add('hidden');
+                adminBtn.innerText = "Manage Matches";
             } else {
-                btnHome.classList.remove('hidden');
-                if (pageId === 'admin') btnAdmin.innerText = "EXIT ADMIN";
+                backBtn.classList.remove('hidden');
+                if (id === 'admin') adminBtn.innerText = "Close Terminal";
             }
         }
 
-        function initDashboard() {
-            updateGMT8Clock();
-            fetchTickerText();
-            fetchStreams();
-            fetchLiveScores();
-            setInterval(fetchLiveScores, 60000);
-            setInterval(fetchTickerText, 15000);
+        function initPortal() {
+            runClock();
+            syncScheduleStore();
+            setInterval(syncScheduleStore, 20000);
         }
 
-        // UPGRADED LIVE DATA PIPELINE INTAKE MATRIX
-        async function fetchLiveScores() {
-            const loader = document.getElementById('scores-loading');
-            const container = document.getElementById('scores-container');
+        // AUTO PRE-POPULATION ON INITIAL FRESH RUNS IF REPO IS CLEAR
+        function seedInitialMatches(currentLength) {
+            if (currentLength > 0) return;
+            const demoMatches = [
+                { title: "Czechia vs South Africa", quality: "18 June - 16:00 SGT", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                { title: "Switzerland vs Bosnia and Herzegovina", quality: "18 June - 19:00 SGT", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                { title: "Canada vs Qatar", quality: "18 June - 22:00 SGT", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                { title: "Mexico vs South Korea", quality: "19 June - 01:00 SGT", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                { title: "USA vs Australia", quality: "19 June - 19:00 SGT", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+            ];
+            demoMatches.forEach(async (m) => {
+                await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams`, {
+                    method: 'POST',
+                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`, "Content-Type": "application/json" },
+                    body: JSON.stringify(m)
+                });
+            });
+            setTimeout(syncScheduleStore, 1500);
+        }
+
+        // INTERFACE GENERATOR & SYNCHRONIZER
+        async function syncScheduleStore() {
             try {
-                // Fetch direct real-time data from proxy pipeline
-                const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://api.football-data.org/v4/matches'));
-                const responseData = await res.json();
-                const cleanData = JSON.parse(responseData.contents);
+                const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?select=*`, {
+                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
+                });
+                const matches = await res.json();
                 
-                loader.classList.add('hidden');
-                container.classList.remove('hidden');
-                container.innerHTML = '';
-
-                let activeMatches = [];
-                if (cleanData && cleanData.matches) {
-                    activeMatches = cleanData.matches.filter(m => m.status === 'IN_PLAY' || m.status === 'FINISHED' || m.status === 'PAUSED');
+                if (!matches || matches.length === 0) {
+                    seedInitialMatches(0);
+                    document.getElementById('schedule-empty-log').classList.remove('hidden');
+                    document.getElementById('schedule-display-grid').classList.add('hidden');
+                    return;
                 }
 
-                // If no active live matches are currently inside the open stream right now, deploy real-time matching fixtures automatically
-                if (activeMatches.length === 0) {
-                    activeMatches = [
-                        { homeTeam: { name: "Austria" }, awayTeam: { name: "Jordan" }, score: { fullTime: { home: 3, away: 1 } }, status: "FINISHED", competition: { name: "International Friendly" } },
-                        { homeTeam: { name: "Germany" }, awayTeam: { name: "Italy" }, score: { fullTime: { home: 1, away: 2 } }, status: "IN_PLAY", competition: { name: "UEFA Nations League" } },
-                        { homeTeam: { name: "Real Madrid" }, awayTeam: { name: "Barcelona" }, score: { fullTime: { home: 2, away: 2 } }, status: "IN_PLAY", competition: { name: "LaLiga" } },
-                        { homeTeam: { name: "Manchester City" }, awayTeam: { name: "Arsenal" }, score: { fullTime: { home: 0, away: 1 } }, status: "FINISHED", competition: { name: "Premier League" } },
-                        { homeTeam: { name: "France" }, awayTeam: { name: "Argentina" }, score: { fullTime: { home: 2, away: 3 } }, status: "FINISHED", competition: { name: "International Match" } },
-                        { homeTeam: { name: "Liverpool" }, awayTeam: { name: "Chelsea" }, score: { fullTime: { home: 1, away: 0 } }, status: "PAUSED", competition: { name: "Premier League" } }
-                    ];
+                document.getElementById('schedule-empty-log').classList.add('hidden');
+                document.getElementById('schedule-display-grid').classList.remove('hidden');
+                
+                renderClientGrid(matches);
+                renderAdminControlList(matches);
+            } catch (err) { console.error("Sync Error: ", err); }
+        }
+
+        function renderClientGrid(data) {
+            const grid = document.getElementById('schedule-display-grid');
+            grid.innerHTML = '';
+
+            data.forEach(item => {
+                // Parse Country Names out safely from "Country 1 vs Country 2" format
+                let country1 = "Unknown", country2 = "Unknown";
+                if(item.title && item.title.toLowerCase().includes('vs')) {
+                    const split = item.title.split(/vs/i);
+                    country1 = split[0].trim();
+                    country2 = split[1].trim();
+                } else {
+                    country1 = item.title || "Team A";
                 }
 
-                activeMatches.slice(0, 12).forEach(match => {
-                    const card = document.createElement('div');
-                    card.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500/30 transition shadow-lg relative overflow-hidden";
-                    
-                    let displayStatus = "LIVE";
-                    let statusBadgeClass = "bg-red-500/10 border-red-500/20 text-red-400 live-pulse";
-                    
-                    if (match.status === 'FINISHED' || match.status === 'FT') {
-                        displayStatus = "FT";
-                        statusBadgeClass = "bg-slate-950 border-slate-800 text-slate-500";
-                    } else if (match.status === 'PAUSED' || match.status === 'HT') {
-                        displayStatus = "HT";
-                        statusBadgeClass = "bg-amber-500/10 border-amber-500/20 text-amber-400";
-                    }
+                // API Flag URLs using structured code generation names
+                const flagUrl1 = `https://countryflagsapi.netlify.app/flag/${encodeURIComponent(country1)}.svg`;
+                const flagUrl2 = country2 !== "Unknown" ? `https://countryflagsapi.netlify.app/flag/${encodeURIComponent(country2)}.svg` : '';
 
-                    const hScore = match.score?.fullTime?.home !== null ? match.score.fullTime.home : 0;
-                    const aScore = match.score?.fullTime?.away !== null ? match.score.fullTime.away : 0;
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-blue-500/40 transition-all shadow-xl relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950";
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between text-[10px] font-mono mb-6">
+                            <span class="text-blue-400 font-bold tracking-wider uppercase bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-400 live-pulse"></span> MATCH FIXTURE
+                            </span>
+                            <span class="text-slate-400 font-black bg-slate-950 border border-slate-800 px-3 py-1 rounded-lg">${item.quality || "TBD"}</span>
+                        </div>
 
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center justify-between text-[10px] font-mono mb-3">
-                                <span class="text-slate-500 max-w-[170px] truncate uppercase tracking-wider">${match.competition?.name || "MATCHDAY"}</span>
-                                <span class="font-bold px-1.5 py-0.5 border rounded text-[9px] ${statusBadgeClass}">${displayStatus}</span>
+                        <div class="flex items-center justify-center gap-6 py-4">
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-20 h-14 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-md flex items-center justify-center">
+                                    <img src="${flagUrl1}" onerror="this.src='https://placehold.co/80x56/0f172a/fff?text=⚽'" class="w-full h-full object-cover">
+                                </div>
+                                <span class="text-xs font-black tracking-wide text-center text-slate-200 mt-1 uppercase truncate max-w-[120px]">${country1}</span>
                             </div>
-                            <div class="text-xs font-bold text-slate-200 flex items-center justify-between py-2 bg-slate-950/50 px-3 rounded-xl border border-slate-900">
-                                <span class="truncate flex-1 text-left max-w-[100px]">${match.homeTeam?.name || "Home Team"}</span>
-                                <span class="text-amber-400 font-black px-2 text-center bg-slate-950 rounded-lg py-1 min-w-[50px] mx-2 font-mono">${hScore} - ${aScore}</span>
-                                <span class="truncate flex-1 text-right max-w-[100px]">${match.awayTeam?.name || "Away Team"}</span>
+
+                            <div class="text-slate-600 font-black text-xs uppercase tracking-widest bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">VS</div>
+
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-20 h-14 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-md flex items-center justify-center">
+                                    ${flagUrl2 ? `<img src="${flagUrl2}" onerror="this.src='https://placehold.co/80x56/0f172a/fff?text=⚽'" class="w-full h-full object-cover">` : `<div class="text-lg">🏳️</div>`}
+                                </div>
+                                <span class="text-xs font-black tracking-wide text-center text-slate-200 mt-1 uppercase truncate max-w-[120px]">${country2}</span>
                             </div>
                         </div>
-                        <div class="pt-3 mt-3 border-t border-slate-950/60 flex items-center justify-between text-[9px] text-slate-600 uppercase font-mono">
-                            <span>Telemetry Active</span>
-                            <span class="text-[8px] text-slate-500 font-sans tracking-wide">Verified Feed</span>
+
+                        <div class="text-center mt-4 mb-6">
+                            <h3 class="text-md font-black uppercase tracking-wide text-slate-100 line-clamp-1">${country1} <span class="text-blue-500">vs</span> ${country2}</h3>
                         </div>
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (err) { 
-                loader.classList.remove('hidden');
-                loader.innerText = "Matrix Network pipeline dormant.";
+                    </div>
+
+                    <button onclick="bootMatchPlayer('${encodeURIComponent(item.url)}', '${encodeURIComponent(item.title)}')" class="w-full bg-slate-950 hover:bg-blue-600 text-blue-400 hover:text-white border border-slate-800 hover:border-transparent font-black py-3 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-inner">Launch Stream</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderAdminControlList(data) {
+            const list = document.getElementById('admin-schedule-list');
+            list.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs";
+                row.innerHTML = `
+                    <div class="truncate pr-4 text-slate-300">
+                        <span class="text-blue-400 font-bold">[${item.quality || "TIME"}]</span> ${item.title || "Fixture Match"}
+                    </div>
+                    <button onclick="strikeMatch(${item.id})" class="text-red-400 font-bold px-2.5 py-1 bg-red-500/5 rounded-lg border border-red-500/10 hover:bg-red-500 hover:text-white transition">Remove</button>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        // WRITE DISPATCH ACTIONS
+        async function deployNewMatch() {
+            const home = document.getElementById('match-home').value.trim();
+            const away = document.getElementById('match-away').value.trim();
+            const timeInfo = document.getElementById('match-time').value.trim();
+            const url = document.getElementById('match-url').value.trim();
+
+            if(!home || !timeInfo || !url) {
+                alert("Please fill in Home Country, Match Time, and Video Stream URL.");
+                return;
             }
-        }
 
-        // SUPABASE INTERACTION LAYER
-        async function fetchTickerText() {
-            try {
-                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/settings?id=eq.global`, {
-                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
-                });
-                const data = await response.json();
-                if(data && data[0]) {
-                    document.getElementById('live-ticker-text').innerText = data[0].ticker_text || "Matchday Central Node Active";
-                    if(document.getElementById('page-admin').classList.contains('hidden')) {
-                        document.getElementById('admin-ticker-input').value = data[0].ticker_text || "";
-                    }
-                }
-            } catch (err) { console.error(err); }
-        }
-
-        async function updateTickerText() {
-            const text = document.getElementById('admin-ticker-input').value.trim();
-            if(!text) return;
-            try {
-                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/settings?id=eq.global`, {
-                    method: 'PATCH',
-                    headers: { 
-                        "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ ticker_text: text })
-                });
-                if(response.ok) {
-                    document.getElementById('live-ticker-text').innerText = text;
-                    alert("Ticker saved!");
-                }
-            } catch(err) { alert("Write transaction rejected."); }
-        }
-
-        async function fetchStreams() {
-            try {
-                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?select=*`, {
-                    headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
-                });
-                const streams = await response.json();
-                renderDashboardStreams(streams);
-                renderAdminStreams(streams);
-            } catch (err) { console.error(err); }
-        }
-
-        async function addStream() {
-            const title = document.getElementById('stream-title').value.trim();
-            const quality = document.getElementById('stream-quality').value;
-            const url = document.getElementById('stream-url').value.trim();
-
-            if (!title || !url) return alert("All parameters must be completed.");
-
-            const cleanStreamData = { title: title, quality: quality, url: url };
+            const payload = {
+                title: away ? `${home} vs ${away}` : home,
+                quality: timeInfo,
+                url: url
+            };
 
             try {
-                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams`, {
+                const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams`, {
                     method: 'POST',
                     headers: { 
                         "apikey": SUPABASE_CONFIG.anonKey, 
                         "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}`,
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal"
+                        "Content-Type": "application/json"
                     },
-                    body: JSON.stringify(cleanStreamData)
+                    body: JSON.stringify(payload)
                 });
-                
-                if (response.ok || response.status === 201) {
-                    document.getElementById('stream-title').value = '';
-                    document.getElementById('stream-url').value = '';
-                    fetchStreams();
-                    alert("Channel broadcast deployed!");
-                } else {
-                    const failLog = await response.text();
-                    alert("Database rejected submission: " + failLog);
+                if(res.ok) {
+                    document.getElementById('match-home').value = '';
+                    document.getElementById('match-away').value = '';
+                    document.getElementById('match-time').value = '';
+                    document.getElementById('match-url').value = '';
+                    syncScheduleStore();
+                    alert("Match frame generated and broadcast link cached!");
                 }
-            } catch(err) { alert("Transaction connection dropped."); }
+            } catch (err) { alert("Deployment error occurred."); }
         }
 
-        async function deleteStream(id) {
-            if(!confirm("Remove channel?")) return;
+        async function strikeMatch(id) {
+            if(!confirm("Purge match from active slate?")) return;
             try {
-                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?id=eq.${id}`, {
+                const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/streams?id=eq.${id}`, {
                     method: 'DELETE',
                     headers: { "apikey": SUPABASE_CONFIG.anonKey, "Authorization": `Bearer ${SUPABASE_CONFIG.anonKey}` }
                 });
-                if(response.ok) fetchStreams();
-            } catch(err) { alert("Delete transaction failed."); }
+                if(res.ok) syncScheduleStore();
+            } catch (err) { alert("Purge request rejected."); }
         }
 
-        function renderDashboardStreams(dataArray) {
-            const container = document.getElementById('streams-grid');
-            container.innerHTML = '';
-            if (!dataArray || dataArray.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-600 text-xs font-mono uppercase">No channels active in registry.</div>`;
-                return;
-            }
-            dataArray.forEach(stream => {
-                const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-amber-500/20 transition p-4 flex flex-col justify-between group";
-                card.innerHTML = `
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1.5">
-                                <span class="w-1 h-1 rounded-full bg-emerald-400"></span> Live Feed
-                            </span>
-                            <span class="bg-slate-950 text-slate-500 border border-slate-800 text-[9px] font-bold px-2 py-0.5 rounded">${stream.quality || "HD"}</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-200 mb-4 truncate">${stream.title || "Live Channel"}</h3>
-                    </div>
-                    <button onclick="launchStream('${encodeURIComponent(stream.url || '')}', '${encodeURIComponent(stream.title || '')}', '${stream.quality || 'HD'}')" class="w-full bg-slate-950 border border-slate-800 group-hover:bg-amber-500 text-slate-400 group-hover:text-black font-bold py-2 rounded-lg transition text-[10px] tracking-wider uppercase">Launch Stream</button>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function renderAdminStreams(dataArray) {
-            const container = document.getElementById('admin-streams-list');
-            container.innerHTML = '';
-            if(!dataArray || dataArray.length === 0) return;
-            dataArray.forEach(stream => {
-                const item = document.createElement('div');
-                item.className = "flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs";
-                item.innerHTML = `
-                    <div class="truncate pr-4 text-slate-300 font-medium">
-                        <span class="text-amber-400 font-bold mr-1">[${stream.quality || "HD"}]</span> ${stream.title || "Live Channel"}
-                    </div>
-                    <button onclick="deleteStream(${stream.id})" class="text-red-500 font-bold px-2 py-1 text-[11px] bg-red-500/5 rounded border border-red-500/10">Delete</button>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        function launchStream(url, title, quality) {
+        // PLAYER ACTIVATION LAYER
+        function bootMatchPlayer(url, title) {
             showPage('player');
             document.getElementById('player-title').innerText = decodeURIComponent(title);
-            document.getElementById('player-quality').innerText = quality;
             
+            const target = decodeURIComponent(url);
             const video = document.getElementById('video-element');
-            const targetUrl = decodeURIComponent(url);
 
             if (Hls.isSupported()) {
-                activeHlsInstance = new Hls({ maxBufferSize: 20 * 1024 * 1024 });
-                activeHlsInstance.loadSource(targetUrl);
-                activeHlsInstance.attachMedia(video);
-                activeHlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
+                activeHls = new Hls({ maxBufferSize: 24 * 1024 * 1024 });
+                activeHls.loadSource(target);
+                activeHls.attachMedia(video);
+                activeHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = targetUrl;
+                video.src = target;
                 video.play().catch(()=>{});
             }
         }
 
-        function destroyVideoPlayer() {
+        function closeMediaPipeline() {
             const video = document.getElementById('video-element');
-            if (activeHlsInstance) { activeHlsInstance.destroy(); activeHlsInstance = null; }
+            if (activeHls) { activeHls.destroy(); activeHls = null; }
             if (video) { video.pause(); video.src = ""; video.load(); }
-        }
-
-        function showElementError(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 4000);
         }
     </script>
 </body>
