@@ -59,7 +59,6 @@
             100% { opacity: 1; filter: drop-shadow(0 0 15px rgba(59,130,246,0.3)); }
         }
         
-        /* Custom scrollbar styling for high-end feel */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
         ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 10px; }
@@ -119,7 +118,7 @@
             </div>
         </header>
 
-        <div class="flex-1 relative flex flex-col justify-center py-12 px-6">
+        <div class="flex-1 relative flex flex-col justify-start py-12 px-6">
             
             <main id="page-home-empty" class="fade-view absolute inset-x-0 mx-auto max-w-md text-center p-10 bg-slate-900/40 border border-slate-800 rounded-[32px] hidden">
                 <span class="text-4xl block mb-4">💤</span>
@@ -127,9 +126,9 @@
                 <p class="text-slate-500 text-xs mt-1.5">Configure schedules inside your manager panel terminal.</p>
             </main>
 
-            <main id="page-home" class="fade-view max-w-4xl mx-auto w-full hidden">
+            <main id="page-home" class="fade-view max-w-4xl mx-auto w-full hidden space-y-8">
+                
                 <div class="bg-slate-900/30 border border-slate-800/80 rounded-[40px] p-10 flex flex-col justify-between shadow-2xl relative overflow-hidden backdrop-blur-xl">
-                    
                     <div class="absolute -top-32 -left-32 w-64 h-64 bg-blue-600/5 blur-[120px] rounded-full pointer-events-none"></div>
                     <div class="absolute -bottom-32 -right-32 w-64 h-64 bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -171,6 +170,19 @@
                         Watch Transmission Feed ↗
                     </button>
                 </div>
+
+                <div class="bg-slate-900/20 border border-slate-800/60 rounded-[32px] p-8 backdrop-blur-xl space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-800/40 pb-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-2 h-2 rounded-full bg-blue-500 live-pulse"></div>
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-300">Unified Studio Hub Timeline</h3>
+                        </div>
+                        <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider">All Channels Online</span>
+                    </div>
+                    
+                    <div id="unified-matrix-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </div>
+                </div>
             </main>
 
             <main id="page-player" class="fade-view max-w-5xl mx-auto w-full hidden">
@@ -210,21 +222,6 @@
                     </div>
                 </div>
             </main>
-        </div>
-    </div>
-
-    <div id="upcoming-panel" class="fixed bottom-6 right-6 z-30 flex flex-col items-end pointer-events-none hidden">
-        <button id="upcoming-open-btn" onclick="toggleUpcomingPanel(true)" class="pointer-events-auto bg-slate-900/90 hover:bg-slate-800 backdrop-blur-xl border border-slate-800 rounded-2xl px-5 py-3.5 flex items-center gap-3 shadow-2xl transition-all hover:scale-[1.02] active:scale-95 text-xs font-bold tracking-wide text-slate-200">
-            <span class="w-2 h-2 rounded-full bg-blue-500 live-pulse"></span>
-            Upcoming Fixtures (<span id="upcoming-counter">0</span>)
-        </button>
-
-        <div id="upcoming-card" class="pointer-events-auto w-80 bg-slate-900/95 backdrop-blur-2xl border border-slate-800/80 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-6 flex flex-col space-y-4 max-h-[400px] origin-bottom-right scale-0 opacity-0 transform transition-all duration-300 hidden">
-            <div class="flex items-center justify-between border-b border-slate-800/60 pb-3.5">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Upcoming Timeline</h3>
-                <button onclick="toggleUpcomingPanel(false)" class="text-slate-500 hover:text-white bg-slate-950 h-6 w-6 flex items-center justify-center rounded-lg text-xs font-bold border border-slate-800">×</button>
-            </div>
-            <div id="upcoming-list-container" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs"></div>
         </div>
     </div>
 
@@ -270,22 +267,6 @@
             } else { alert("Incorrect credentials."); }
         }
 
-        function toggleUpcomingPanel(open) {
-            const card = document.getElementById('upcoming-card');
-            const openBtn = document.getElementById('upcoming-open-btn');
-            if (open) {
-                card.classList.remove('hidden');
-                setTimeout(() => {
-                    card.classList.remove('scale-0', 'opacity-0'); card.classList.add('scale-100', 'opacity-100');
-                    openBtn.classList.add('scale-0', 'opacity-0'); setTimeout(() => openBtn.classList.add('hidden'), 200);
-                }, 10);
-            } else {
-                card.classList.remove('scale-100', 'opacity-100'); card.classList.add('scale-0', 'opacity-0');
-                openBtn.classList.remove('hidden');
-                setTimeout(() => { openBtn.classList.remove('scale-0', 'opacity-0'); card.classList.add('hidden'); }, 300);
-            }
-        }
-
         function promptAdminLogin() {
             if (!document.getElementById('page-admin').classList.contains('hidden')) { showPage('home'); return; }
             if (prompt("Enter Passkey:") === ACCESS_KEYS.admin) showPage('admin'); else alert("Denied.");
@@ -320,7 +301,6 @@
 
         function initPortal() {
             runClock(); syncScheduleStore();
-            document.getElementById('upcoming-panel').classList.remove('hidden');
             setInterval(syncScheduleStore, 30000);
         }
 
@@ -331,43 +311,68 @@
                 });
                 cachedMatchesStore = await res.json();
                 renderAdminControlList(cachedMatchesStore);
-                buildUpcomingMatchesPanel(cachedMatchesStore);
+                renderUnifiedStudioMatrixPanel(cachedMatchesStore);
                 if (document.getElementById('page-player').classList.contains('hidden') && document.getElementById('page-admin').classList.contains('hidden')) {
                     showPage('home');
                 }
             } catch (err) { console.error(err); }
         }
 
-        function buildUpcomingMatchesPanel(data) {
-            const container = document.getElementById('upcoming-list-container');
+        function renderUnifiedStudioMatrixPanel(data) {
+            const grid = document.getElementById('unified-matrix-grid');
+            grid.innerHTML = '';
             const now = new Date().getTime();
-            // Maximum live session duration evaluated strictly to 2 hours
-            const upcomingMatches = data.filter(item => {
-                return now < (new Date(item.start_time).getTime() + (2 * 60 * 60 * 1000));
-            });
-            document.getElementById('upcoming-counter').innerText = upcomingMatches.length;
-            container.innerHTML = '';
-            if (upcomingMatches.length === 0) {
-                container.innerHTML = `<div class="text-slate-600 text-center py-6 font-medium">Timeline empty</div>`; return;
+            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000);
+
+            if (data.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-slate-600 text-center py-8 font-medium">No records inside timeline matrix</div>`;
+                return;
             }
-            upcomingMatches.forEach(item => {
+
+            data.forEach(item => {
                 let c1 = "Team A", c2 = "Team B";
                 if (item.title.toLowerCase().includes('vs')) {
                     const parts = item.title.split(/vs/i); c1 = parts[0].trim(); c2 = parts[1].trim();
                 }
-                const displayTime = new Date(item.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                const cardRow = document.createElement('div');
-                cardRow.className = "bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 flex flex-col space-y-2 hover:border-slate-700 transition-all";
-                cardRow.innerHTML = `
-                    <div class="text-[10px] text-blue-400 font-mono font-bold">${displayTime} SGT</div>
-                    <div class="flex items-center gap-2 truncate">
-                        <img src="${getFlagUrl(c1)}" class="w-4 h-3 object-cover rounded-sm">
-                        <span class="font-bold text-slate-300 truncate max-w-[80px]">${c1}</span>
-                        <span class="text-slate-600 font-mono">v</span>
-                        <img src="${getFlagUrl(c2)}" class="w-4 h-3 object-cover rounded-sm">
-                        <span class="font-bold text-slate-300 truncate max-w-[80px]">${c2}</span>
-                    </div>`;
-                container.appendChild(cardRow);
+                const mTime = new Date(item.start_time).getTime();
+                const kickoffStr = new Date(item.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                
+                let badgeClass = "";
+                let badgeText = "";
+                let isLive = false;
+
+                if (now >= mTime && now <= (mTime + durationLimitMs)) {
+                    isLive = true;
+                    badgeClass = "bg-red-500/10 text-red-400 border border-red-500/20 live-pulse";
+                    badgeText = "LIVE NOW";
+                } else if (now < mTime) {
+                    badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                    badgeText = "UPCOMING";
+                } else {
+                    badgeClass = "bg-slate-950 text-slate-500 border border-slate-800";
+                    badgeText = "CONCLUDED (OVERRIDE ACTIVE)";
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-950/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition-all group";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="font-mono text-xs text-blue-400 font-bold">${kickoffStr} SGT</span>
+                        <span class="text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-lg ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="flex items-center gap-3 mb-5 truncate">
+                        <img src="${getFlagUrl(c1)}" class="w-6 h-4 object-cover rounded-sm border border-slate-800/40">
+                        <span class="font-bold text-slate-200 text-sm truncate max-w-[100px]">${c1}</span>
+                        <span class="text-slate-600 font-mono text-xs">vs</span>
+                        <img src="${getFlagUrl(c2)}" class="w-6 h-4 object-cover rounded-sm border border-slate-800/40">
+                        <span class="font-bold text-slate-200 text-sm truncate max-w-[100px]">${c2}</span>
+                    </div>
+                    <button class="w-full bg-slate-900 group-hover:bg-blue-600 group-hover:text-white border border-slate-800 group-hover:border-blue-500 text-slate-300 font-bold py-2.5 rounded-xl text-[11px] tracking-wider uppercase transition-all active:scale-[0.98]">
+                        Connect Matrix Stream ↗
+                    </button>
+                `;
+                card.querySelector('button').onclick = () => { bootMatchPlayer(item.url, item.title); };
+                grid.appendChild(card);
             });
         }
 
@@ -378,8 +383,8 @@
             let isLiveCurrently = false;
             let formattedStreamRuntime = "00:00:00";
             
-            // STRICT 2 Hours Max Duration Limit
-            const durationLimitMs = 2 * 60 * 60 * 1000; 
+            // 2 Hours 5.5 Minutes Max Duration Limit (125.5 minutes)
+            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); 
 
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
@@ -387,7 +392,6 @@
                     displayTargetMatch = cachedMatchesStore[i];
                     isLiveCurrently = true;
                     
-                    // Count-up stream active duration ticker calculation
                     const totalSecsElapsed = Math.floor((now - mTime) / 1000);
                     const runHours = Math.floor(totalSecsElapsed / 3600);
                     const runMins = Math.floor((totalSecsElapsed % 3600) / 60);
@@ -435,8 +439,8 @@
                     countdownTimer.innerText = formattedStreamRuntime;
                     countdownTimer.className = "font-mono text-5xl font-bold text-red-500 tracking-tight bg-slate-950/40 px-8 py-4 rounded-3xl border border-slate-800 inline-block shadow-2xl backdrop-blur-md";
 
-                    actionBtn.className = "w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-xl cursor-pointer active:scale-[0.99]";
-                    actionBtn.innerText = "Watch Transmission Feed ↗";
+                    actionBtn.className = "w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-xl shadow-red-600/10 cursor-pointer active:scale-[0.99]";
+                    actionBtn.innerText = "Watch Live Match Now ↗";
                 } else {
                     const targetKickoffTime = new Date(displayTargetMatch.start_time).getTime();
                     const diff = targetKickoffTime - now;
@@ -455,17 +459,16 @@
                         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                         countdownTimer.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-                        actionBtn.className = "w-full bg-gradient-to-r from-slate-800 to-slate-700 text-slate-300 font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase border border-slate-700 active:scale-[0.99]";
-                        actionBtn.innerText = "Pre-Match Coverage Locked";
+                        actionBtn.className = "w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-xl shadow-blue-600/10 active:scale-[0.99]";
+                        actionBtn.innerText = "Watch Pre-Match Coverage ↗";
                     } else {
-                        // Kill player if inside feed when 2-hour max threshold hits
                         if (!document.getElementById('page-player').classList.contains('hidden')) { closeMediaPipeline(); showPage('home'); }
                         badgePill.className = "font-bold tracking-widest text-[9px] uppercase bg-slate-950 border border-slate-800 text-slate-500 px-3.5 py-1.5 rounded-xl flex items-center gap-2";
                         badgeText.innerText = "BROADCAST CONCLUDED";
                         document.getElementById('display-time-tag').innerText = "OFF-AIR";
                         countdownWrap.classList.add('hidden');
                         actionBtn.className = "w-full bg-slate-950 text-slate-600 font-bold py-5 rounded-2xl text-xs tracking-widest uppercase border border-slate-900 cursor-not-allowed shadow-inner";
-                        actionBtn.innerText = "Transmission Terminated (2H Limit)";
+                        actionBtn.innerText = "Transmission Terminated (2H 5.5M Limit)";
                         actionBtn.onclick = null;
                     }
                 }
