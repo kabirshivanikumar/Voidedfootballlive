@@ -167,7 +167,7 @@
                     </div>
 
                     <button id="stage-launch-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-xl shadow-blue-600/10 active:scale-[0.99]">
-                        Watch Transmission Feed ↗
+                        Watch Pre-Match Coverage ↗
                     </button>
                 </div>
 
@@ -175,7 +175,7 @@
                     <div class="flex items-center justify-between border-b border-slate-800/40 pb-4">
                         <div class="flex items-center gap-2.5">
                             <div class="w-2 h-2 rounded-full bg-blue-500 live-pulse"></div>
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-300">Unified Studio Hub Timeline</h3>
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-300">Past/Upcoming Fixtures</h3>
                         </div>
                         <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider">All Channels Online</span>
                     </div>
@@ -318,18 +318,43 @@
             } catch (err) { console.error(err); }
         }
 
+        function findCurrentShowcaseMatch(now, durationLimitMs) {
+            for (let i = 0; i < cachedMatchesStore.length; i++) {
+                const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
+                if (now >= mTime && now <= (mTime + durationLimitMs)) {
+                    return cachedMatchesStore[i];
+                }
+            }
+            for (let i = 0; i < cachedMatchesStore.length; i++) {
+                if (new Date(cachedMatchesStore[i].start_time).getTime() > now) {
+                    return cachedMatchesStore[i];
+                }
+            }
+            return cachedMatchesStore.length > 0 ? cachedMatchesStore[cachedMatchesStore.length - 1] : null;
+        }
+
         function renderUnifiedStudioMatrixPanel(data) {
             const grid = document.getElementById('unified-matrix-grid');
             grid.innerHTML = '';
             const now = new Date().getTime();
-            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000);
+            
+            const liveDurationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); // 2h 5.5m
+            const totalRemovalLimitMs = (2 * 60 * 60 * 1000) + (20 * 60 * 1000); // 2h 20m Hard Drop
 
-            if (data.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-slate-600 text-center py-8 font-medium">No records inside timeline matrix</div>`;
+            // Determine which match is currently highlighted on the primary card spotlight
+            const currentShowcase = findCurrentShowcaseMatch(now, liveDurationLimitMs);
+
+            const visibleData = data.filter(item => {
+                const mTime = new Date(item.start_time).getTime();
+                return now <= (mTime + totalRemovalLimitMs);
+            });
+
+            if (visibleData.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-slate-600 text-center py-8 font-medium">No active or recently concluded records inside timeline matrix</div>`;
                 return;
             }
 
-            data.forEach(item => {
+            visibleData.forEach(item => {
                 let c1 = "Team A", c2 = "Team B";
                 if (item.title.toLowerCase().includes('vs')) {
                     const parts = item.title.split(/vs/i); c1 = parts[0].trim(); c2 = parts[1].trim();
@@ -339,15 +364,21 @@
                 
                 let badgeClass = "";
                 let badgeText = "";
-                let isLive = false;
+                let btnText = "Connect Matrix Stream ↗";
+                let btnDisabled = false;
 
-                if (now >= mTime && now <= (mTime + durationLimitMs)) {
-                    isLive = true;
+                if (now >= mTime && now <= (mTime + liveDurationLimitMs)) {
                     badgeClass = "bg-red-500/10 text-red-400 border border-red-500/20 live-pulse";
                     badgeText = "LIVE NOW";
                 } else if (now < mTime) {
                     badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
                     badgeText = "UPCOMING";
+                    
+                    // If it is upcoming but NOT yet on the big active countdown spotlight board, lock it down
+                    if (!currentShowcase || currentShowcase.id !== item.id) {
+                        btnText = "Pre-Match Coverage Locked";
+                        btnDisabled = true;
+                    }
                 } else {
                     badgeClass = "bg-slate-950 text-slate-500 border border-slate-800";
                     badgeText = "CONCLUDED (OVERRIDE ACTIVE)";
@@ -355,6 +386,11 @@
 
                 const card = document.createElement('div');
                 card.className = "bg-slate-950/40 border border-slate-800/60 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition-all group";
+                
+                let btnClasses = btnDisabled 
+                    ? "w-full bg-slate-950/40 border border-slate-900 text-slate-600 font-bold py-2.5 rounded-xl text-[11px] tracking-wider uppercase cursor-not-allowed"
+                    : "w-full bg-slate-900 group-hover:bg-blue-600 group-hover:text-white border border-slate-800 group-hover:border-blue-500 text-slate-300 font-bold py-2.5 rounded-xl text-[11px] tracking-wider uppercase transition-all active:scale-[0.98]";
+
                 card.innerHTML = `
                     <div class="flex items-center justify-between mb-4">
                         <span class="font-mono text-xs text-blue-400 font-bold">${kickoffStr} SGT</span>
@@ -367,11 +403,14 @@
                         <img src="${getFlagUrl(c2)}" class="w-6 h-4 object-cover rounded-sm border border-slate-800/40">
                         <span class="font-bold text-slate-200 text-sm truncate max-w-[100px]">${c2}</span>
                     </div>
-                    <button class="w-full bg-slate-900 group-hover:bg-blue-600 group-hover:text-white border border-slate-800 group-hover:border-blue-500 text-slate-300 font-bold py-2.5 rounded-xl text-[11px] tracking-wider uppercase transition-all active:scale-[0.98]">
-                        Connect Matrix Stream ↗
+                    <button ${btnDisabled ? 'disabled' : ''} class="${btnClasses}">
+                        ${btnText}
                     </button>
                 `;
-                card.querySelector('button').onclick = () => { bootMatchPlayer(item.url, item.title); };
+                
+                if (!btnDisabled) {
+                    card.querySelector('button').onclick = () => { bootMatchPlayer(item.url, item.title); };
+                }
                 grid.appendChild(card);
             });
         }
@@ -383,8 +422,8 @@
             let isLiveCurrently = false;
             let formattedStreamRuntime = "00:00:00";
             
-            // 2 Hours 5.5 Minutes Max Duration Limit (125.5 minutes)
-            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); 
+            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); // 2 Hours 5.5 Minutes Max
+            const totalRemovalLimitMs = (2 * 60 * 60 * 1000) + (20 * 60 * 1000); // 2 Hours 20 Minutes Max
 
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
@@ -403,10 +442,19 @@
 
             if (!displayTargetMatch) {
                 for (let i = 0; i < cachedMatchesStore.length; i++) {
-                    if (new Date(cachedMatchesStore[i].start_time).getTime() > now) { displayTargetMatch = cachedMatchesStore[i]; break; }
+                    const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
+                    if (mTime > now) { displayTargetMatch = cachedMatchesStore[i]; break; }
                 }
             }
-            if (!displayTargetMatch && cachedMatchesStore.length > 0) displayTargetMatch = cachedMatchesStore[cachedMatchesStore.length - 1];
+            if (!displayTargetMatch && cachedMatchesStore.length > 0) {
+                for (let i = cachedMatchesStore.length - 1; i >= 0; i--) {
+                    const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
+                    if (now <= (mTime + totalRemovalLimitMs)) {
+                        displayTargetMatch = cachedMatchesStore[i];
+                        break;
+                    }
+                }
+            }
 
             if (displayTargetMatch && !document.getElementById('page-home').classList.contains('hidden')) {
                 let c1 = "Team A", c2 = "Team B";
@@ -473,6 +521,8 @@
                     }
                 }
             }
+            // Continuous alignment for matrix action items state updates
+            renderUnifiedStudioMatrixPanel(cachedMatchesStore);
         }
 
         function renderAdminControlList(data) {
