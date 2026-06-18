@@ -3,133 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arena Live Display</title>
+    <title>Arena Live World Cup Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         .live-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(0.98); } }
+        
+        /* Smooth Page Transition Mechanics */
+        .fade-view {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        .fade-view.view-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Audio Visualizer Bar Wave Animation */
+        .bar-wave { display: inline-block; width: 3px; background-color: #f59e0b; border-radius: 2px; animation: bounce 0.6s ease-in-out infinite alternate; }
+        .bar-wave:nth-child(2) { animation-delay: 0.15s; }
+        .bar-wave:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { 0% { height: 4px; } 100% { height: 16px; } }
     </style>
 </head>
-<body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col">
+<body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600">
 
-    <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4">
-        <div class="bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl max-w-md w-full text-center">
-            <h1 class="text-2xl font-black text-amber-500 mb-2 uppercase tracking-wider">⚽ Arena System</h1>
-            <input type="password" id="gate-password" placeholder="Access Password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500">
-            <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 font-bold py-3 rounded-xl transition-all">Enter Platform</button>
-            <p id="gate-error" class="text-red-500 text-xs mt-3 hidden">⚠️ Incorrect credentials.</p>
+    <audio id="bg-playlist-manager"></audio>
+
+    <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4 transition-all duration-500">
+        <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl max-w-md w-full text-center transform scale-100 transition-all">
+            <div class="w-16 h-16 bg-gradient-to-tr from-amber-600 to-yellow-400 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-amber-600/20">⚽</div>
+            <h1 class="text-2xl font-black text-slate-100 tracking-wider uppercase">Arena World Cup Studio</h1>
+            <p class="text-slate-400 text-xs mt-1 mb-6">Enter secure access code to unlock dynamic stream core</p>
+            <input type="password" id="gate-password" placeholder="Access Password" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500 transition-all focus:ring-2 focus:ring-amber-500/10">
+            <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-amber-600/10 tracking-wide uppercase text-xs">Authorize Entry</button>
         </div>
     </div>
 
-    <div id="main-app" class="hidden flex flex-col min-h-screen">
+    <div id="main-app" class="opacity-0 transition-opacity duration-500 flex flex-col min-h-screen">
         
-        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-md">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
-                <span class="text-xl">🏆</span>
-                <h1 class="text-md font-black tracking-widest text-slate-100">ARENA LIVE</h1>
+        <header class="bg-slate-900/60 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shadow-md sticky top-0 z-40">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="showPage('home')">
+                <span class="text-xl transition-transform group-hover:scale-125">🏆</span>
+                <h1 class="text-xs font-black tracking-widest text-slate-300 uppercase group-hover:text-white transition-colors">Arena Broadcast Engine</h1>
             </div>
+            
             <div class="flex items-center gap-4">
-                <div class="bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs font-mono text-amber-400">
-                    SGT (GMT+8): <span id="sng-clock">00:00:00</span>
+                
+                <div id="visualizer-pill" class="bg-slate-950/80 border border-slate-800 rounded-full pl-3 pr-4 py-1.5 flex items-center gap-3 text-[11px] max-w-[240px] shadow-inner">
+                    <div class="flex items-end gap-0.5 h-4 w-4">
+                        <span class="bar-wave" style="animation-play-state: paused;"></span>
+                        <span class="bar-wave" style="animation-play-state: paused;"></span>
+                        <span class="bar-wave" style="animation-play-state: paused;"></span>
+                    </div>
+                    <span id="track-name-display" class="font-bold truncate text-slate-400 max-w-[120px]">Standby...</span>
+                    <div class="flex items-center gap-1 border-l border-slate-800 pl-2">
+                        <button onclick="toggleAudioPlayback()" id="audio-toggle-btn" class="hover:text-amber-400 p-0.5 transition-colors">▶</button>
+                        <button onclick="skipToNextTrack()" class="hover:text-amber-400 p-0.5 text-xs transition-colors">⏭</button>
+                    </div>
                 </div>
-                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden">← Main Dashboard</button>
-                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-950 hover:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-blue-400 uppercase">Settings</button>
+
+                <div class="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] font-mono text-amber-400 shadow-inner">
+                    SGT: <span id="sng-clock">00:00:00</span>
+                </div>
+                <button id="btn-home" onclick="showPage('home')" class="text-slate-400 hover:text-white font-bold text-xs uppercase hidden transition-colors">← Hub</button>
+                <button id="btn-admin-trigger" onclick="promptAdminLogin()" class="bg-slate-950 hover:bg-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-800 text-blue-400 uppercase transition-all active:scale-95">Settings</button>
             </div>
         </header>
 
-        <main id="page-home" class="max-w-4xl mx-auto p-6 flex-1 w-full flex flex-col justify-center">
+        <div class="flex-1 relative flex flex-col justify-center">
             
-            <div id="no-active-stage" class="text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl hidden">
+            <main id="page-home-empty" class="fade-view absolute inset-x-0 mx-auto max-w-md text-center p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-xl hidden">
                 <span class="text-4xl block mb-4">💤</span>
-                <h2 class="text-lg font-black uppercase tracking-wider text-slate-400">Database Empty</h2>
-                <p class="text-slate-500 text-xs mt-1">Please log into settings to program upcoming matches.</p>
-            </div>
+                <h2 class="text-sm font-black uppercase tracking-wider text-slate-300">Timeline Core Empty</h2>
+                <p class="text-slate-500 text-xs mt-1">Access the settings terminal to schedule your incoming fixture links.</p>
+            </main>
 
-            <div id="active-match-stage" class="bg-slate-900 border-2 border-slate-800 rounded-3xl p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950 hidden">
-                
-                <div class="flex items-center justify-between border-b border-slate-800/60 pb-4 mb-6">
-                    <span id="display-status-pill" class="font-bold tracking-widest text-[10px] uppercase border px-3 py-1 rounded-full flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span> <span id="display-status-text">UPCOMING TRANSMISSION</span>
-                    </span>
-                    <span id="display-time-tag" class="text-slate-400 font-black font-mono text-xs bg-slate-950 border border-slate-800 px-3 py-1 rounded-lg">COUNTDOWN</span>
-                </div>
-
-                <div id="countdown-wrap" class="w-full text-center mb-2 hidden">
-                    <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 block mb-1">Kickoff Countdown</span>
-                    <span id="countdown-timer" class="font-mono text-3xl font-black text-amber-400 tracking-wider bg-slate-950 px-6 py-2 rounded-2xl border border-slate-800/80 inline-block">00:00:00</span>
-                </div>
-
-                <div class="flex items-center justify-center gap-8 md:gap-16 py-6">
-                    <div class="flex flex-col items-center gap-3 flex-1">
-                        <div class="w-28 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-lg flex items-center justify-center">
-                            <img id="flag-home" src="" class="w-full h-full object-cover hidden" onload="this.classList.remove('hidden')">
-                        </div>
-                        <span id="name-home" class="text-sm font-black tracking-wider text-center text-slate-200 uppercase truncate max-w-[150px]">Home</span>
-                    </div>
-
-                    <div class="text-amber-500 font-black text-sm uppercase tracking-widest bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800 shadow-inner">VS</div>
-
-                    <div class="flex flex-col items-center gap-3 flex-1">
-                        <div class="w-28 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-lg flex items-center justify-center">
-                            <img id="flag-away" src="" class="w-full h-full object-cover hidden" onload="this.classList.remove('hidden')">
-                        </div>
-                        <span id="name-away" class="text-sm font-black tracking-wider text-center text-slate-200 uppercase truncate max-w-[150px]">Away</span>
-                    </div>
-                </div>
-
-                <div class="text-center mt-6 mb-8">
-                    <h2 id="stage-match-title" class="text-2xl font-black uppercase tracking-wide text-white drop-shadow-md">COUNTRY 1 <span class="text-blue-500">VS</span> COUNTRY 2</h2>
-                </div>
-
-                <button id="stage-launch-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer">
-                    Watch Pre-Match Coverage ↗
-                </button>
-            </div>
-        </main>
-
-        <main id="page-player" class="max-w-5xl mx-auto p-6 w-full hidden">
-            <div class="bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
-                <div class="aspect-video w-full bg-black">
-                    <video id="video-element" class="w-full h-full" controls autoplay playsinline></video>
-                </div>
-                <div class="p-4 bg-slate-950 flex items-center justify-between">
-                    <div>
-                        <h2 id="player-title" class="text-sm font-bold text-white">Live Match Feed</h2>
-                        <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2 py-0.5 border border-emerald-500/20 rounded uppercase mt-1 inline-block">Secure Encoded Engine</span>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <main id="page-admin" class="max-w-xl mx-auto p-6 w-full hidden">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
-                <div>
-                    <h2 class="text-xs font-black uppercase tracking-wider text-blue-400 mb-1">📅 Program Match Schedule Slates</h2>
-                    <p class="text-slate-500 text-[11px] mb-4">Input structural timeline metrics below. Flag rendering executes automatically.</p>
+            <main id="page-home" class="fade-view max-w-4xl mx-auto p-6 w-full hidden">
+                <div class="bg-slate-900 border-2 border-slate-800 rounded-[32px] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950/40 group">
                     
-                    <div class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <input type="text" id="match-home" placeholder="Home Country (e.g., Brazil)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none">
-                            <input type="text" id="match-away" placeholder="Away Country (e.g., France)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none">
+                    <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/10 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+
+                    <div class="flex items-center justify-between border-b border-slate-800/60 pb-5 mb-6">
+                        <span id="display-status-pill" class="font-bold tracking-widest text-[10px] uppercase border px-3 py-1 rounded-full flex items-center gap-1.5 transition-all duration-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-current"></span> <span id="display-status-text">SCHEDULING ACTIVE</span>
+                        </span>
+                        <span id="display-time-tag" class="text-slate-400 font-black font-mono text-xs bg-slate-950 border border-slate-800 px-3 py-1 rounded-xl shadow-inner">00:00 SGT</span>
+                    </div>
+
+                    <div id="countdown-wrap" class="w-full text-center mb-4 hidden transform transition-transform">
+                        <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 block mb-1">Live Feed Countdown</span>
+                        <span id="countdown-timer" class="font-mono text-4xl font-black text-amber-400 tracking-wider bg-slate-950/80 px-6 py-2.5 rounded-2xl border border-slate-800 inline-block shadow-lg">00:00:00</span>
+                    </div>
+
+                    <div class="flex items-center justify-center gap-8 md:gap-16 py-6">
+                        <div class="flex flex-col items-center gap-3 flex-1 transform transition-all duration-500 hover:scale-105">
+                            <div class="w-32 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 shadow-xl flex items-center justify-center relative">
+                                <img id="flag-home" src="" class="w-full h-full object-cover hidden transition-opacity duration-300" onload="this.classList.remove('hidden')">
+                            </div>
+                            <span id="name-home" class="text-xs font-black tracking-wider text-center text-slate-400 uppercase truncate max-w-[150px] mt-1">Country A</span>
                         </div>
+
+                        <div class="text-amber-500 font-black text-xs uppercase tracking-widest bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800 shadow-inner select-none">VS</div>
+
+                        <div class="flex flex-col items-center gap-3 flex-1 transform transition-all duration-500 hover:scale-105">
+                            <div class="w-32 h-20 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 shadow-xl flex items-center justify-center relative">
+                                <img id="flag-away" src="" class="w-full h-full object-cover hidden transition-opacity duration-300" onload="this.classList.remove('hidden')">
+                            </div>
+                            <span id="name-away" class="text-xs font-black tracking-wider text-center text-slate-400 uppercase truncate max-w-[150px] mt-1">Country B</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-6 mb-8">
+                        <h2 id="stage-match-title" class="text-3xl font-black uppercase tracking-wide text-white drop-shadow-lg transition-all duration-300">COUNTRY 1 <span class="text-blue-500">VS</span> COUNTRY 2</h2>
+                    </div>
+
+                    <button id="stage-launch-btn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20">
+                        Launch Stream Portal ↗
+                    </button>
+                </div>
+            </main>
+
+            <main id="page-player" class="fade-view max-w-5xl mx-auto p-6 w-full hidden">
+                <div class="bg-slate-900 rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl">
+                    <div class="aspect-video w-full bg-black relative">
+                        <video id="video-element" class="w-full h-full" controls autoplay playsinline></video>
+                    </div>
+                    <div class="p-5 bg-slate-950 border-t border-slate-900 flex items-center justify-between">
                         <div>
-                            <label class="text-[10px] uppercase font-mono tracking-wider text-slate-500 block mb-1">Kick-off Timestamp (SGT / Local time)</label>
-                            <input type="datetime-local" id="match-time" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none">
+                            <h2 id="player-title" class="text-sm font-bold text-white uppercase tracking-wide">Live Stream Frame</h2>
+                            <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2 py-0.5 border border-emerald-500/20 rounded-md uppercase mt-1 inline-block tracking-widest">Active Link Feed</span>
                         </div>
-                        <input type="text" id="match-url" placeholder="M3U8 Broadcast Stream Source Link" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:outline-none">
-                        <button onclick="deployNewMatch()" class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-2.5 rounded-xl text-xs uppercase tracking-widest text-white transition-all">Save To Timeline Registry</button>
                     </div>
                 </div>
+            </main>
 
-                <hr class="border-slate-800">
+            <main id="page-admin" class="fade-view max-w-xl mx-auto p-6 w-full hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-[32px] p-6 space-y-6 shadow-2xl relative">
+                    <div>
+                        <h2 class="text-xs font-black uppercase tracking-wider text-blue-400 mb-1">📅 Mass Scheduler Pipeline</h2>
+                        <p class="text-slate-500 text-[11px] mb-4">Input structural match attributes. Conversions track instantly.</p>
+                        
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="match-home" placeholder="Home Country (e.g., Brazil)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
+                                <input type="text" id="match-away" placeholder="Away Country (e.g., France)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-mono tracking-wider text-slate-500 block mb-1 ml-1">Kickoff Time Configuration (SGT / GMT+8)</label>
+                                <input type="datetime-local" id="match-time" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors">
+                            </div>
+                            <input type="text" id="match-url" placeholder="M3U8 HLS Broadcast Target Source Link" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-colors">
+                            <button onclick="deployNewMatch()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] font-bold py-3 rounded-2xl text-xs uppercase tracking-widest text-white transition-all shadow-lg">Commit To Registry</button>
+                        </div>
+                    </div>
 
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Registered Match Timelines</h3>
-                    <div id="admin-schedule-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                    <hr class="border-slate-800/60">
+
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2.5">Timeline Queue Inventory</h3>
+                        <div id="admin-schedule-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <script>
@@ -140,8 +180,26 @@
         const ACCESS_KEYS = { gate: "football123", admin: "admin123" };
         let activeHls = null;
         let cachedMatchesStore = [];
+        let shuffledAudioPlaylist = [];
+        let currentTrackIndex = 0;
 
-        // ISO-A2 Code Country Dictionary
+        // Jam Playlist Resource Dictionary (Copyright-Free / Open-Source Creative Commons Safe Alternatives)
+        const trackCatalogue = [
+            { name: "Colors", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" },
+            { name: "Dai Dai", url: "https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3" },
+            { name: "Champions", url: "https://assets.mixkit.co/music/preview/mixkit-stadium-rock-211.mp3" },
+            { name: "We Are One", url: "https://assets.mixkit.co/music/preview/mixkit-raising-me-higher-34.mp3" },
+            { name: "Live It Up", url: "https://assets.mixkit.co/music/preview/mixkit-deep-urban-623.mp3" },
+            { name: "Dreamers", url: "https://assets.mixkit.co/music/preview/mixkit-complex-motivation-1135.mp3" },
+            { name: "Hayya Hayya", url: "https://assets.mixkit.co/music/preview/mixkit-world-sunshine-1033.mp3" },
+            { name: "Magic In The Air", url: "https://assets.mixkit.co/music/preview/mixkit-celebration-party-1022.mp3" },
+            { name: "Waka Waka", url: "https://assets.mixkit.co/music/preview/mixkit-african-safari-loop-902.mp3" },
+            { name: "Wavin Flag", url: "https://assets.mixkit.co/music/preview/mixkit-dream-big-1100.mp3" },
+            { name: "La La La", url: "https://assets.mixkit.co/music/preview/mixkit-carnival-house-87.mp3" },
+            { name: "Time of Our Lives", url: "https://assets.mixkit.co/music/preview/mixkit-fun-times-84.mp3" }
+        ];
+
+        // FlagCDN Map Index
         const countryCodes = {
             "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
             "bahamas": "bs", "bahrain": "bh", "bangladesh": "bd", "barbados": "bb", "belarus": "by", "belgium": "be", "belize": "bz", "benin": "bj", "bhutan": "bt", "bolivia": "bo",
@@ -166,19 +224,69 @@
             "uruguay": "uy", "uzbekistan": "uz", "vanuatu": "vu", "vatican city": "va", "venezuela": "ve", "vietnam": "vn", "yemen": "ye", "zambia": "zm", "zimbabwe": "zw"
         };
 
-        function getFlagUrl(countryName) {
-            const clean = countryName.trim().toLowerCase();
-            const code = countryCodes[clean] || "un";
+        function getFlagUrl(name) {
+            const code = countryCodes[name.trim().toLowerCase()] || "un";
             return `https://flagcdn.com/w160/${code}.png`;
         }
 
+        // JAM PLAYLIST CONFIGURATION ARCHITECTURE
+        function initJamPlaylist() {
+            shuffledAudioPlaylist = [...trackCatalogue].sort(() => Math.random() - 0.5);
+            currentTrackIndex = 0;
+            
+            const player = document.getElementById('bg-playlist-manager');
+            player.volume = 0.25; // Balanced low atmospheric monitoring volume
+            
+            player.addEventListener('ended', () => { skipToNextTrack(); });
+            mountTrackSource();
+        }
+
+        function mountTrackSource() {
+            const player = document.getElementById('bg-playlist-manager');
+            const track = shuffledAudioPlaylist[currentTrackIndex];
+            player.src = track.url;
+            document.getElementById('track-name-display').innerText = track.name;
+        }
+
+        function toggleAudioPlayback(forceState) {
+            const player = document.getElementById('bg-playlist-manager');
+            const btn = document.getElementById('audio-toggle-btn');
+            const waves = document.querySelectorAll('.bar-wave');
+
+            const shouldPlay = forceState !== undefined ? forceState : player.paused;
+
+            if (shouldPlay) {
+                player.play().catch(()=>{});
+                btn.innerText = "⏸";
+                waves.forEach(w => w.style.animationPlayState = 'running');
+            } else {
+                player.pause();
+                btn.innerText = "▶";
+                waves.forEach(w => w.style.animationPlayState = 'paused');
+            }
+        }
+
+        function skipToNextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % shuffledAudioPlaylist.length;
+            mountTrackSource();
+            toggleAudioPlayback(true);
+        }
+
+        // ENTRY ACCESS SECURITY GATE
         function checkGatePassword() {
             if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
-                document.getElementById('gate-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
+                const gate = document.getElementById('gate-screen');
+                gate.classList.add('opacity-0', 'pointer-events-none');
+                
+                const app = document.getElementById('main-app');
+                app.classList.remove('hidden');
+                setTimeout(() => { app.classList.add('opacity-100'); }, 50);
+
+                initJamPlaylist();
+                toggleAudioPlayback(true); // Engages immediate soundtrack loop handoff
                 initPortal();
             } else {
-                alert("Incorrect credentials.");
+                alert("Incorrect entry credentials.");
             }
         }
 
@@ -194,19 +302,32 @@
         }
 
         function runClock() {
-            const currentSGT = new Date();
             document.getElementById('sng-clock').innerText = new Intl.DateTimeFormat('en-US', {
                 timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-            }).format(currentSGT);
-            
+            }).format(new Date());
             evaluateActiveTimelineState();
         }
         setInterval(runClock, 1000);
 
         function showPage(id) {
             if (id !== 'player') closeMediaPipeline();
-            document.querySelectorAll('main').forEach(m => m.classList.add('hidden'));
-            document.getElementById(`page-${id}`).classList.remove('hidden');
+            
+            const targetedMain = document.getElementById(`page-${id}`);
+            if (id === 'home' && (cachedMatchesStore.length === 0)) {
+                document.getElementById('page-home').classList.add('hidden');
+                document.getElementById('page-home-empty').classList.remove('hidden');
+                setTimeout(() => document.getElementById('page-home-empty').classList.add('view-active'), 50);
+            }
+
+            document.querySelectorAll('main').forEach(m => {
+                m.classList.remove('view-active');
+                setTimeout(() => { m.classList.add('hidden'); }, 300);
+            });
+
+            setTimeout(() => {
+                targetedMain.classList.remove('hidden');
+                setTimeout(() => { targetedMain.classList.add('view-active'); }, 50);
+            }, 300);
 
             const backBtn = document.getElementById('btn-home');
             const adminBtn = document.getElementById('btn-admin-trigger');
@@ -232,26 +353,25 @@
                 });
                 cachedMatchesStore = await res.json();
                 renderAdminControlList(cachedMatchesStore);
-                evaluateActiveTimelineState();
+                
+                if (document.getElementById('page-player').classList.contains('hidden') && !document.getElementById('page-admin').classList.contains('hidden')) {
+                    // Avoid overriding views inside admin dashboards
+                } else if (document.getElementById('page-player').classList.contains('hidden')) {
+                    showPage('home');
+                }
             } catch (err) { console.error(err); }
         }
 
         function evaluateActiveTimelineState() {
-            if (!cachedMatchesStore || cachedMatchesStore.length === 0) {
-                document.getElementById('no-active-stage').classList.remove('hidden');
-                document.getElementById('active-match-stage').classList.add('hidden');
-                return;
-            }
+            if (!cachedMatchesStore || cachedMatchesStore.length === 0) return;
 
             const now = new Date().getTime();
             let displayTargetMatch = null;
             let isLiveCurrently = false;
 
-            // 1. Look for a live match running inside its 2.5 hour schedule block window
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
                 const matchDurationLimit = mTime + (2.5 * 60 * 60 * 1000);
-
                 if (now >= mTime && now <= matchDurationLimit) {
                     displayTargetMatch = cachedMatchesStore[i];
                     isLiveCurrently = true;
@@ -259,26 +379,20 @@
                 }
             }
 
-            // 2. If no match is active, grab the absolute nearest future scheduled item
             if (!displayTargetMatch) {
                 for (let i = 0; i < cachedMatchesStore.length; i++) {
-                    const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
-                    if (mTime > now) {
+                    if (new Date(cachedMatchesStore[i].start_time).getTime() > now) {
                         displayTargetMatch = cachedMatchesStore[i];
                         break;
                     }
                 }
             }
 
-            // 3. Fallback: If ALL scheduled items are in the past, fall back to the most recently completed match
             if (!displayTargetMatch && cachedMatchesStore.length > 0) {
                 displayTargetMatch = cachedMatchesStore[cachedMatchesStore.length - 1];
             }
 
-            if (displayTargetMatch) {
-                document.getElementById('no-active-stage').classList.add('hidden');
-                document.getElementById('active-match-stage').classList.remove('hidden');
-
+            if (displayTargetMatch && !document.getElementById('page-home').classList.contains('hidden')) {
                 let c1 = "Home Team", c2 = "Away Team";
                 if (displayTargetMatch.title.toLowerCase().includes('vs')) {
                     const parts = displayTargetMatch.title.split(/vs/i);
@@ -298,26 +412,20 @@
                 const actionBtn = document.getElementById('stage-launch-btn');
                 const formattedKickoff = new Date(displayTargetMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                // Bind the stream launch trigger directly to the event payload url
-                actionBtn.onclick = () => {
-                    bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title);
-                };
+                actionBtn.onclick = () => { bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title); };
 
                 if (isLiveCurrently) {
-                    // Match is active right now
                     badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-red-500/5 border border-red-500/20 text-red-400 px-3 py-1 rounded-full flex items-center gap-1.5 live-pulse";
                     badgeText.innerText = "● TRANSMISSION ACTIVE";
                     document.getElementById('display-time-tag').innerText = `STARTED AT ${formattedKickoff} SGT`;
                     countdownWrap.classList.add('hidden');
-                    
-                    actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                    actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-blue-600/10 cursor-pointer active:scale-95";
                     actionBtn.innerText = "Watch Live Transmission ↗";
                 } else {
                     const targetKickoffTime = new Date(displayTargetMatch.start_time).getTime();
                     const diff = targetKickoffTime - now;
 
                     if (diff > 0) {
-                        // Match is upcoming (Button is unlocked for pre-match media/studio feeds!)
                         badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-amber-500/5 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full flex items-center gap-1.5";
                         badgeText.innerText = "UPCOMING MATCH STAGE";
                         document.getElementById('display-time-tag').innerText = `KICKOFF AT ${formattedKickoff} SGT`;
@@ -326,25 +434,19 @@
                         const hours = Math.floor(diff / (1000 * 60 * 60));
                         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                        document.getElementById('countdown-timer').innerText = 
-                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        document.getElementById('countdown-timer').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-                        actionBtn.className = "w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                        actionBtn.className = "w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg shadow-amber-600/10 cursor-pointer active:scale-95";
                         actionBtn.innerText = "Watch Pre-Match Coverage ↗";
                     } else {
-                        // Concluded configuration setup fallback
                         badgePill.className = "font-bold tracking-widest text-[10px] uppercase bg-slate-950 border border-slate-800 text-slate-500 px-3 py-1 rounded-full flex items-center gap-1.5";
                         badgeText.innerText = "MATCH CONCLUDED";
                         document.getElementById('display-time-tag').innerText = "FULL TIME";
                         countdownWrap.classList.add('hidden');
-                        
-                        actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer";
+                        actionBtn.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4.5 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-lg cursor-pointer active:scale-95";
                         actionBtn.innerText = "Watch Match Replay Feed ↗";
                     }
                 }
-            } else {
-                document.getElementById('active-match-stage').classList.add('hidden');
-                document.getElementById('no-active-stage').classList.remove('hidden');
             }
         }
 
@@ -354,12 +456,12 @@
             data.forEach(item => {
                 const displayTime = new Date(item.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
                 const row = document.createElement('div');
-                row.className = "flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs";
+                row.className = "flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs transform transition-all hover:border-slate-700";
                 row.innerHTML = `
                     <div class="truncate pr-4 text-slate-300">
                         <span class="text-blue-400 font-bold mr-1">[SGT: ${displayTime}]</span> ${item.title}
                     </div>
-                    <button onclick="strikeMatch(${item.id})" class="text-red-400 font-bold px-2.5 py-1 bg-red-500/5 rounded-lg border border-red-500/10 hover:bg-red-500 hover:text-white transition">Remove</button>
+                    <button onclick="strikeMatch(${item.id})" class="text-red-400 font-bold px-2.5 py-1 bg-red-500/5 rounded-lg border border-red-500/10 hover:bg-red-500 hover:text-white transition active:scale-95">Remove</button>
                 `;
                 list.appendChild(row);
             });
@@ -371,13 +473,11 @@
             const timeVal = document.getElementById('match-time').value;
             const url = document.getElementById('match-url').value.trim();
 
-            if (!home || !timeVal || !url) return alert("Home Country, Kick-off Time and URL parameters are mandatory.");
-
-            const ISOStringWithOffset = new Date(timeVal).toISOString();
+            if (!home || !timeVal || !url) return alert("All fields are mandatory.");
 
             const payload = {
                 title: away ? `${home} vs ${away}` : home,
-                start_time: ISOStringWithOffset,
+                start_time: new Date(timeVal).toISOString(),
                 url: url
             };
 
@@ -393,7 +493,6 @@
                     document.getElementById('match-time').value = '';
                     document.getElementById('match-url').value = '';
                     syncScheduleStore();
-                    alert("Match chronological item added!");
                 }
             } catch (err) { alert("Deployment connection rejected."); }
         }
@@ -410,8 +509,10 @@
         }
 
         function bootMatchPlayer(url, title) {
+            toggleAudioPlayback(false); // Seamless background music mute execution handoff
             showPage('player');
             document.getElementById('player-title').innerText = decodeURIComponent(title);
+            
             const video = document.getElementById('video-element');
             const target = decodeURIComponent(url);
 
