@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arena Live World Cup Studio</title>
+    <title>Live Football Streaming brought to you by Void Enterprises</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
@@ -27,6 +27,8 @@
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600">
+
+    <audio id="bg-playlist-manager" preload="auto" crossorigin="anonymous"></audio>
 
     <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4 transition-all duration-500">
         <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl max-w-md w-full text-center transform scale-100 transition-all">
@@ -179,27 +181,13 @@
         let shuffledAudioPlaylist = [];
         let currentTrackIndex = 0;
 
-        // BROWSER-NATIVE SYNTH MATRIX PLAYLIST (No files needed, works entirely offline)
+        // ACCESSIBLE PUBLIC CORs MP3 AUDIO STREAM LINKS (Direct premium audio files)
         const trackCatalogue = [
-            { name: "Colors", frequency: 293.66 },       // D4
-            { name: "Dai Dai", frequency: 329.63 },       // E4
-            { name: "Champions", frequency: 349.23 },     // F4
-            { name: "We Are One", frequency: 392.00 },    // G4
-            { name: "Live It Up", frequency: 440.00 },    // A4
-            { name: "Dreamers", frequency: 493.88 },      // B4
-            { name: "Hayya Hayya", frequency: 523.25 },   // C5
-            { name: "Magic In The Air", frequency: 587.33 }, // D5
-            { name: "Waka Waka", frequency: 659.25 },     // E5
-            { name: "Wavin Flag", frequency: 698.46 },    // F5
-            { name: "La La La", frequency: 783.99 },       // G5
-            { name: "Time of Our Lives", frequency: 880.00 } // A5
+            { name: "Epic Anthem", url: "https://actions.google.com/sounds/v1/ambiences/stadium_cheering.ogg" },
+            { name: "Synth Wave 1", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+            { name: "Synth Wave 2", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+            { name: "Synth Wave 3", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
         ];
-
-        let audioCtx = null;
-        let oscillator = null;
-        let gainNode = null;
-        let isAudioPlaying = false;
-        let songInterval = null;
 
         const countryCodes = {
             "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
@@ -230,66 +218,50 @@
             return `https://flagcdn.com/w160/${code}.png`;
         }
 
-        // BROWSER-NATIVE CODE AUDIO STUDIO ENGINE
-        function initAudioEngine() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime); // Low background comfort level setting
-                gainNode.connect(audioCtx.destination);
-            }
-            if (shuffledAudioPlaylist.length === 0) {
-                shuffledAudioPlaylist = [...trackCatalogue].sort(() => Math.random() - 0.5);
-            }
+        function initJamPlaylist() {
+            shuffledAudioPlaylist = [...trackCatalogue].sort(() => Math.random() - 0.5);
+            currentTrackIndex = 0;
+            
+            const player = document.getElementById('bg-playlist-manager');
+            player.volume = 0.20;
+            
+            player.addEventListener('ended', () => { skipToNextTrack(); });
+            mountTrackSource();
         }
 
-        function playStudioTrack() {
-            initAudioEngine();
-            if (oscillator) { oscillator.stop(); oscillator.disconnect(); }
-
+        function mountTrackSource() {
+            const player = document.getElementById('bg-playlist-manager');
             const track = shuffledAudioPlaylist[currentTrackIndex];
+            player.src = track.url;
+            player.load();
             document.getElementById('track-name-display').innerText = track.name;
-
-            oscillator = audioCtx.createOscillator();
-            oscillator.type = 'triangle'; // Smooth studio synth note
-            oscillator.frequency.setValueAtTime(track.frequency, audioCtx.currentTime);
-            oscillator.connect(gainNode);
-            oscillator.start();
-            isAudioPlaying = true;
-            updateVisualizerUI(true);
-
-            // Cycle rhythms automatically every 4 seconds to mimic track changeovers
-            clearInterval(songInterval);
-            songInterval = setTimeout(() => { skipToNextTrack(); }, 4000);
         }
 
-        function toggleAudioPlayback() {
-            initAudioEngine();
-            if (isAudioPlaying) {
-                if (oscillator) { oscillator.stop(); }
-                clearInterval(songInterval);
-                isAudioPlaying = false;
-                updateVisualizerUI(false);
+        function toggleAudioPlayback(forceState) {
+            const player = document.getElementById('bg-playlist-manager');
+            const btn = document.getElementById('audio-toggle-btn');
+            const waves = [document.getElementById('wave-1'), document.getElementById('wave-2'), document.getElementById('wave-3')];
+
+            const shouldPlay = forceState !== undefined ? forceState : player.paused;
+
+            if (shouldPlay) {
+                player.play().then(() => {
+                    btn.innerText = "⏸";
+                    waves.forEach(w => w.style.animationPlayState = 'running');
+                }).catch(err => {
+                    console.log("Audio play postponed until context unlock:", err);
+                });
             } else {
-                playStudioTrack();
+                player.pause();
+                btn.innerText = "▶";
+                waves.forEach(w => w.style.animationPlayState = 'paused');
             }
         }
 
         function skipToNextTrack() {
             currentTrackIndex = (currentTrackIndex + 1) % shuffledAudioPlaylist.length;
-            playStudioTrack();
-        }
-
-        function updateVisualizerUI(playing) {
-            const btn = document.getElementById('audio-toggle-btn');
-            const waves = [document.getElementById('wave-1'), document.getElementById('wave-2'), document.getElementById('wave-3')];
-            if (playing) {
-                btn.innerText = "⏸";
-                waves.forEach(w => w.style.animationPlayState = 'running');
-            } else {
-                btn.innerText = "▶";
-                waves.forEach(w => w.style.animationPlayState = 'paused');
-            }
+            mountTrackSource();
+            setTimeout(() => { toggleAudioPlayback(true); }, 50);
         }
 
         function checkGatePassword() {
@@ -301,7 +273,8 @@
                 app.classList.remove('hidden');
                 setTimeout(() => { app.classList.add('opacity-100'); }, 50);
 
-                playStudioTrack(); // Native context activation block unblocked seamlessly
+                initJamPlaylist();
+                toggleAudioPlayback(true);
                 initPortal();
             } else {
                 alert("Incorrect entry credentials.");
@@ -526,7 +499,7 @@
         }
 
         function bootMatchPlayer(url, title) {
-            if (isAudioPlaying) toggleAudioPlayback(); // Turns off matrix soundtrack cleanly 
+            toggleAudioPlayback(false);
             showPage('player');
             document.getElementById('player-title').innerText = decodeURIComponent(title);
             
