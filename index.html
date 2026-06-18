@@ -10,7 +10,6 @@
         .live-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(0.98); } }
         
-        /* Smooth Page Transition Mechanics */
         .fade-view {
             transition: opacity 0.3s ease, transform 0.3s ease;
             opacity: 0;
@@ -21,7 +20,6 @@
             transform: translateY(0);
         }
         
-        /* Audio Visualizer Bar Wave Animation */
         .bar-wave { display: inline-block; width: 3px; background-color: #f59e0b; border-radius: 2px; animation: bounce 0.6s ease-in-out infinite alternate; }
         .bar-wave:nth-child(2) { animation-delay: 0.15s; }
         .bar-wave:nth-child(3) { animation-delay: 0.3s; }
@@ -30,14 +28,14 @@
 </head>
 <body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600">
 
-    <audio id="bg-playlist-manager"></audio>
+    <audio id="bg-playlist-manager" preload="auto" crossorigin="anonymous"></audio>
 
     <div id="gate-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 px-4 transition-all duration-500">
         <div class="bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl max-w-md w-full text-center transform scale-100 transition-all">
             <div class="w-16 h-16 bg-gradient-to-tr from-amber-600 to-yellow-400 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-amber-600/20">⚽</div>
             <h1 class="text-2xl font-black text-slate-100 tracking-wider uppercase">Arena World Cup Studio</h1>
             <p class="text-slate-400 text-xs mt-1 mb-6">Enter secure access code to unlock dynamic stream core</p>
-            <input type="password" id="gate-password" placeholder="Access Password" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500 transition-all focus:ring-2 focus:ring-amber-500/10">
+            <input type="password" id="gate-password" value="football123" placeholder="Access Password" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500 transition-all focus:ring-2 focus:ring-amber-500/10">
             <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-amber-600/10 tracking-wide uppercase text-xs">Authorize Entry</button>
         </div>
     </div>
@@ -52,16 +50,16 @@
             
             <div class="flex items-center gap-4">
                 
-                <div id="visualizer-pill" class="bg-slate-950/80 border border-slate-800 rounded-full pl-3 pr-4 py-1.5 flex items-center gap-3 text-[11px] max-w-[240px] shadow-inner">
+                <div id="visualizer-pill" class="bg-slate-950/80 border border-slate-800 rounded-full pl-3 pr-4 py-1.5 flex items-center gap-3 text-[11px] max-w-[280px] shadow-inner">
                     <div class="flex items-end gap-0.5 h-4 w-4">
-                        <span class="bar-wave" style="animation-play-state: paused;"></span>
-                        <span class="bar-wave" style="animation-play-state: paused;"></span>
-                        <span class="bar-wave" style="animation-play-state: paused;"></span>
+                        <span id="wave-1" class="bar-wave" style="animation-play-state: paused;"></span>
+                        <span id="wave-2" class="bar-wave" style="animation-play-state: paused;"></span>
+                        <span id="wave-3" class="bar-wave" style="animation-play-state: paused;"></span>
                     </div>
                     <span id="track-name-display" class="font-bold truncate text-slate-400 max-w-[120px]">Standby...</span>
                     <div class="flex items-center gap-1 border-l border-slate-800 pl-2">
-                        <button onclick="toggleAudioPlayback()" id="audio-toggle-btn" class="hover:text-amber-400 p-0.5 transition-colors">▶</button>
-                        <button onclick="skipToNextTrack()" class="hover:text-amber-400 p-0.5 text-xs transition-colors">⏭</button>
+                        <button onclick="toggleAudioPlayback()" id="audio-toggle-btn" class="hover:text-amber-400 px-1 transition-colors">▶</button>
+                        <button onclick="skipToNextTrack()" class="hover:text-amber-400 px-1 text-xs transition-colors">箱</button>
                     </div>
                 </div>
 
@@ -183,23 +181,22 @@
         let shuffledAudioPlaylist = [];
         let currentTrackIndex = 0;
 
-        // Jam Playlist Resource Dictionary (Copyright-Free / Open-Source Creative Commons Safe Alternatives)
+        // FIXED CDN HIGH-ACCESSIBILITY MUSIC LINK STREAM ASSETS
         const trackCatalogue = [
-            { name: "Colors", url: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" },
-            { name: "Dai Dai", url: "https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3" },
-            { name: "Champions", url: "https://assets.mixkit.co/music/preview/mixkit-stadium-rock-211.mp3" },
-            { name: "We Are One", url: "https://assets.mixkit.co/music/preview/mixkit-raising-me-higher-34.mp3" },
-            { name: "Live It Up", url: "https://assets.mixkit.co/music/preview/mixkit-deep-urban-623.mp3" },
-            { name: "Dreamers", url: "https://assets.mixkit.co/music/preview/mixkit-complex-motivation-1135.mp3" },
-            { name: "Hayya Hayya", url: "https://assets.mixkit.co/music/preview/mixkit-world-sunshine-1033.mp3" },
-            { name: "Magic In The Air", url: "https://assets.mixkit.co/music/preview/mixkit-celebration-party-1022.mp3" },
-            { name: "Waka Waka", url: "https://assets.mixkit.co/music/preview/mixkit-african-safari-loop-902.mp3" },
-            { name: "Wavin Flag", url: "https://assets.mixkit.co/music/preview/mixkit-dream-big-1100.mp3" },
-            { name: "La La La", url: "https://assets.mixkit.co/music/preview/mixkit-carnival-house-87.mp3" },
-            { name: "Time of Our Lives", url: "https://assets.mixkit.co/music/preview/mixkit-fun-times-84.mp3" }
+            { name: "Colors", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+            { name: "Dai Dai", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+            { name: "Champions", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+            { name: "We Are One", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+            { name: "Live It Up", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
+            { name: "Dreamers", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+            { name: "Hayya Hayya", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
+            { name: "Magic In The Air", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" },
+            { name: "Waka Waka", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3" },
+            { name: "Wavin Flag", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3" },
+            { name: "La La La", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3" },
+            { name: "Time of Our Lives", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3" }
         ];
 
-        // FlagCDN Map Index
         const countryCodes = {
             "afghanistan": "af", "albania": "al", "algeria": "dz", "andorra": "ad", "angola": "ao", "argentina": "ar", "armenia": "am", "australia": "au", "austria": "at", "azerbaijan": "az",
             "bahamas": "bs", "bahrain": "bh", "bangladesh": "bd", "barbados": "bb", "belarus": "by", "belgium": "be", "belize": "bz", "benin": "bj", "bhutan": "bt", "bolivia": "bo",
@@ -229,13 +226,12 @@
             return `https://flagcdn.com/w160/${code}.png`;
         }
 
-        // JAM PLAYLIST CONFIGURATION ARCHITECTURE
         function initJamPlaylist() {
             shuffledAudioPlaylist = [...trackCatalogue].sort(() => Math.random() - 0.5);
             currentTrackIndex = 0;
             
             const player = document.getElementById('bg-playlist-manager');
-            player.volume = 0.25; // Balanced low atmospheric monitoring volume
+            player.volume = 0.25;
             
             player.addEventListener('ended', () => { skipToNextTrack(); });
             mountTrackSource();
@@ -245,20 +241,29 @@
             const player = document.getElementById('bg-playlist-manager');
             const track = shuffledAudioPlaylist[currentTrackIndex];
             player.src = track.url;
+            player.load();
             document.getElementById('track-name-display').innerText = track.name;
         }
 
         function toggleAudioPlayback(forceState) {
             const player = document.getElementById('bg-playlist-manager');
             const btn = document.getElementById('audio-toggle-btn');
-            const waves = document.querySelectorAll('.bar-wave');
+            const waves = [document.getElementById('wave-1'), document.getElementById('wave-2'), document.getElementById('wave-3')];
 
             const shouldPlay = forceState !== undefined ? forceState : player.paused;
 
             if (shouldPlay) {
-                player.play().catch(()=>{});
-                btn.innerText = "⏸";
-                waves.forEach(w => w.style.animationPlayState = 'running');
+                const playPromise = player.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        btn.innerText = "⏸";
+                        waves.forEach(w => w.style.animationPlayState = 'running');
+                    }).catch(error => {
+                        console.log("Playback interaction error logged:", error);
+                        btn.innerText = "▶";
+                        waves.forEach(w => w.style.animationPlayState = 'paused');
+                    });
+                }
             } else {
                 player.pause();
                 btn.innerText = "▶";
@@ -269,10 +274,9 @@
         function skipToNextTrack() {
             currentTrackIndex = (currentTrackIndex + 1) % shuffledAudioPlaylist.length;
             mountTrackSource();
-            toggleAudioPlayback(true);
+            setTimeout(() => { toggleAudioPlayback(true); }, 50);
         }
 
-        // ENTRY ACCESS SECURITY GATE
         function checkGatePassword() {
             if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
                 const gate = document.getElementById('gate-screen');
@@ -283,7 +287,8 @@
                 setTimeout(() => { app.classList.add('opacity-100'); }, 50);
 
                 initJamPlaylist();
-                toggleAudioPlayback(true); // Engages immediate soundtrack loop handoff
+                // Direct user click context triggers safe audio unblocking bypass loop natively
+                toggleAudioPlayback(true);
                 initPortal();
             } else {
                 alert("Incorrect entry credentials.");
@@ -355,7 +360,6 @@
                 renderAdminControlList(cachedMatchesStore);
                 
                 if (document.getElementById('page-player').classList.contains('hidden') && !document.getElementById('page-admin').classList.contains('hidden')) {
-                    // Avoid overriding views inside admin dashboards
                 } else if (document.getElementById('page-player').classList.contains('hidden')) {
                     showPage('home');
                 }
@@ -509,7 +513,7 @@
         }
 
         function bootMatchPlayer(url, title) {
-            toggleAudioPlayback(false); // Seamless background music mute execution handoff
+            toggleAudioPlayback(false);
             showPage('player');
             document.getElementById('player-title').innerText = decodeURIComponent(title);
             
