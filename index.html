@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Football Streaming brought to you by Void Enterprises</title>
+    <title>Arena Live World Cup Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
@@ -19,6 +19,37 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* --- STADIUM SKETCH INTRO ANIMATIONS --- */
+        .sketch-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .sketch-line-fast {
+            stroke-dasharray: 600;
+            stroke-dashoffset: 600;
+            animation: drawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.4s;
+        }
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        .stadium-glow {
+            opacity: 0;
+            animation: beaconGlow 2s ease-in-out forwards 1.8s;
+        }
+        @keyframes beaconGlow {
+            0% { opacity: 0; filter: drop-shadow(0 0 0px rgba(59,130,246,0)); }
+            50% { opacity: 0.8; filter: drop-shadow(0 0 25px rgba(59,130,246,0.6)); }
+            100% { opacity: 1; filter: drop-shadow(0 0 15px rgba(59,130,246,0.3)); }
+        }
+        .stadium-flare {
+            transform: scale(0);
+            animation: beamFlare 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 2.2s;
+        }
+        @keyframes beamFlare {
+            to { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-600 relative">
@@ -30,6 +61,62 @@
             <p class="text-slate-400 text-xs mt-1 mb-6">Enter secure access code to unlock dynamic stream core</p>
             <input type="password" id="gate-password" value="football123" placeholder="Access Password" class="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-3 text-center text-white mb-4 focus:outline-none focus:border-amber-500 transition-all focus:ring-2 focus:ring-amber-500/10">
             <button onclick="checkGatePassword()" class="w-full bg-amber-600 hover:bg-amber-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-amber-600/10 tracking-wide uppercase text-xs">Authorize Entry</button>
+        </div>
+    </div>
+
+    <div id="intro-overlay" class="fixed inset-0 bg-slate-950 z-40 hidden flex flex-col items-center justify-center transition-opacity duration-700 pointer-events-none">
+        <div class="w-full max-w-xl px-6 relative flex flex-col items-center">
+            <svg viewBox="0 0 800 400" class="w-full h-auto opacity-90">
+                <g stroke="rgba(30, 41, 59, 0.5)" stroke-width="1">
+                    <line x1="0" y1="100" x2="800" y2="100" />
+                    <line x1="0" y1="200" x2="800" y2="200" />
+                    <line x1="0" y1="300" x2="800" y2="300" />
+                    <line x1="200" y1="0" x2="200" y2="400" />
+                    <line x1="400" y1="0" x2="400" y2="400" />
+                    <line x1="600" y1="0" x2="600" y2="400" />
+                </g>
+                
+                <ellipse cx="400" cy="320" rx="260" ry="40" fill="none" stroke="#1e293b" stroke-width="2" />
+                <ellipse cx="400" cy="320" rx="220" ry="30" fill="none" stroke="rgba(59, 130, 246, 0.2)" stroke-width="1" />
+                
+                <path d="M 120,280 C 120,120 680,120 680,280" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" class="sketch-line" />
+                <path d="M 100,290 C 100,90 700,90 700,290" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5,5" class="sketch-line" />
+                
+                <path d="M 170,295 C 170,160 630,160 630,295" fill="none" stroke="#1d4ed8" stroke-width="2" class="sketch-line-fast" />
+                <path d="M 220,305 C 220,200 580,200 580,305" fill="none" stroke="#1e40af" stroke-width="1.5" class="sketch-line-fast" />
+                
+                <line x1="180" y1="210" x2="160" y2="293" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
+                <line x1="270" y1="160" x2="250" y2="305" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
+                <line x1="400" y1="140" x2="400" y2="310" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,4" class="sketch-line" />
+                <line x1="530" y1="160" x2="550" y2="305" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
+                <line x1="620" y1="210" x2="640" y2="293" stroke="#3b82f6" stroke-width="2" class="sketch-line-fast" />
+                
+                <path d="M 120,195 Q 400,120 680,195" fill="none" stroke="#60a5fa" stroke-width="3" class="sketch-line" />
+                
+                <g class="stadium-glow">
+                    <polygon points="150,180 0,0 80,0" fill="url(#lightGradient)" opacity="0.35" />
+                    <polygon points="650,180 800,0 720,0" fill="url(#lightGradient)" opacity="0.35" />
+                    <ellipse cx="400" cy="240" rx="180" ry="70" fill="url(#centerWash)" opacity="0.15" />
+                </g>
+
+                <circle cx="150" cy="180" r="5" fill="#f59e0b" class="stadium-flare" />
+                <circle cx="650" cy="180" r="5" fill="#f59e0b" class="stadium-flare" />
+
+                <defs>
+                    <linearGradient id="lightGradient" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
+                        <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+                    </linearGradient>
+                    <radialGradient id="centerWash" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            
+            <div class="mt-4 text-center">
+                <h3 class="text-[10px] font-mono tracking-[0.3em] uppercase text-blue-400 font-bold animate-pulse">Constructing Digital Arena Engine...</h3>
+            </div>
         </div>
     </div>
 
@@ -149,7 +236,7 @@
         </div>
     </div>
 
-    <div id="upcoming-panel" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none hidden">
+    <div id="upcoming-panel" class="fixed bottom-6 right-6 z-30 flex flex-col items-end pointer-events-none hidden">
         <button id="upcoming-open-btn" onclick="toggleUpcomingPanel(true)" class="pointer-events-auto bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-full px-4 py-2.5 flex items-center gap-2.5 shadow-2xl transition-all hover:scale-105 active:scale-95 text-xs font-bold tracking-wide text-slate-200">
             <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -166,9 +253,7 @@
                 </div>
                 <button onclick="toggleUpcomingPanel(false)" class="text-slate-500 hover:text-white transition-colors bg-slate-950 hover:bg-slate-800 h-6 w-6 flex items-center justify-center rounded-lg text-xs font-bold border border-slate-800">×</button>
             </div>
-            
-            <div id="upcoming-list-container" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
-                </div>
+            <div id="upcoming-list-container" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs"></div>
         </div>
     </div>
 
@@ -215,11 +300,24 @@
                 const gate = document.getElementById('gate-screen');
                 gate.classList.add('opacity-0', 'pointer-events-none');
                 
-                const app = document.getElementById('main-app');
-                app.classList.remove('hidden');
-                setTimeout(() => { app.classList.add('opacity-100'); }, 50);
+                // Trigger Blueprint Sketch Intro Overlay
+                const intro = document.getElementById('intro-overlay');
+                intro.classList.remove('hidden');
 
-                initPortal();
+                // Leave the blueprint sketching for 3.8 seconds, then crossfade to app core
+                setTimeout(() => {
+                    intro.classList.add('opacity-0');
+                    const app = document.getElementById('main-app');
+                    app.classList.remove('hidden');
+                    
+                    setTimeout(() => { 
+                        app.classList.add('opacity-100'); 
+                        intro.classList.add('hidden');
+                    }, 50);
+
+                    initPortal();
+                }, 3800);
+
             } else {
                 alert("Incorrect entry credentials.");
             }
@@ -325,7 +423,6 @@
             const container = document.getElementById('upcoming-list-container');
             const now = new Date().getTime();
             
-            // Filter store for items that are strictly structured in the future
             const upcomingMatches = data.filter(item => new Date(item.start_time).getTime() > now);
             document.getElementById('upcoming-counter').innerText = upcomingMatches.length;
 
