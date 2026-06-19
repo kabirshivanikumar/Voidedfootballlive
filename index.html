@@ -36,16 +36,16 @@
             transform: translateY(0);
         }
 
-        /* --- STADIUM SKETCH INTRO ANIMATIONS --- */
+        /* --- SKETCH ANIMATIONS --- */
         .sketch-line {
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
+            stroke-dasharray: 1200;
+            stroke-dashoffset: 1200;
             animation: drawLine 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
         .sketch-line-fast {
-            stroke-dasharray: 600;
-            stroke-dashoffset: 600;
-            animation: drawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.4s;
+            stroke-dasharray: 800;
+            stroke-dashoffset: 800;
+            animation: drawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s;
         }
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
         
@@ -79,15 +79,17 @@
 
     <div id="intro-overlay" class="fixed inset-0 bg-[#030712] z-40 hidden flex flex-col items-center justify-center transition-opacity duration-700 pointer-events-none">
         <div class="w-full max-w-xl px-6 relative flex flex-col items-center">
-            <svg viewBox="0 0 800 400" class="w-full h-auto opacity-90">
-                <g stroke="rgba(30, 41, 59, 0.4)" stroke-width="1">
-                    <line x1="0" y1="100" x2="800" y2="100" /><line x1="0" y1="200" x2="800" y2="200" /><line x1="0" y1="300" x2="800" y2="300" />
-                </g>
-                <path d="M 120,280 C 120,120 680,120 680,280" fill="none" stroke="#2563eb" stroke-width="2.5" class="sketch-line" />
-                <path d="M 170,295 C 170,160 630,160 630,295" fill="none" stroke="#1d4ed8" stroke-width="2" class="sketch-line-fast" />
+            <svg viewBox="0 0 800 600" class="w-full h-auto opacity-90">
+                <path d="M 60,520 C 60,180 740,180 740,520" fill="none" stroke="rgba(30, 41, 59, 0.4)" stroke-width="2" />
+                
+                <path d="M 320,480 L 350,220 L 375,150 M 480,480 L 450,220 L 425,150" fill="none" stroke="#2563eb" stroke-width="2.5" class="sketch-line" />
+                <path d="M 360,420 C 370,390 430,390 440,420 L 450,540 L 350,540 Z" fill="none" stroke="#1d4ed8" stroke-width="2" class="sketch-line-fast" />
+                <path d="M 365,150 C 365,90 435,90 435,150 L 420,190 C 420,210 380,210 380,190 Z" fill="none" stroke="#fbbf24" stroke-width="3" class="sketch-line" />
+                <path d="M 385,190 L 385,220 L 415,220 L 415,190" fill="none" stroke="#f59e0b" stroke-width="2.5" class="sketch-line-fast" />
+                
                 <g class="stadium-glow">
-                    <polygon points="150,180 0,0 80,0" fill="url(#lightGradient)" opacity="0.25" />
-                    <polygon points="650,180 800,0 720,0" fill="url(#lightGradient)" opacity="0.25" />
+                    <polygon points="400,130 0,0 200,0" fill="url(#lightGradient)" opacity="0.15" />
+                    <polygon points="400,130 800,0 600,0" fill="url(#lightGradient)" opacity="0.15" />
                 </g>
                 <defs>
                     <linearGradient id="lightGradient" x1="0" y1="1" x2="0" y2="0">
@@ -95,8 +97,8 @@
                     </linearGradient>
                 </defs>
             </svg>
-            <div class="mt-6 text-center">
-                <h3 class="text-[10px] font-mono tracking-[0.4em] uppercase text-blue-500 font-bold animate-pulse">Initializing Broadcast Matrices...</h3>
+            <div class="mt-2 text-center">
+                <h3 id="overlay-message" class="text-[10px] font-mono tracking-[0.4em] uppercase text-blue-500 font-bold animate-pulse">Initializing Broadcast Matrices...</h3>
             </div>
         </div>
     </div>
@@ -254,17 +256,33 @@
         function checkGatePassword() {
             if (document.getElementById('gate-password').value === ACCESS_KEYS.gate) {
                 document.getElementById('gate-screen').classList.add('opacity-0', 'pointer-events-none');
-                const intro = document.getElementById('intro-overlay');
-                intro.classList.remove('hidden');
-
-                setTimeout(() => {
-                    intro.classList.add('opacity-0');
-                    const app = document.getElementById('main-app');
-                    app.classList.remove('hidden');
-                    setTimeout(() => { app.classList.add('opacity-100'); intro.classList.add('hidden'); }, 50);
+                triggerLineArtOverlay("Initializing Broadcast Matrices...", () => {
                     initPortal();
-                }, 2400);
+                });
             } else { alert("Incorrect credentials."); }
+        }
+
+        // Reusable animation utility incorporating Mbappe trophy lifting scene 
+        function triggerLineArtOverlay(msgText, callback) {
+            const intro = document.getElementById('intro-overlay');
+            document.getElementById('overlay-message').innerText = msgText;
+            
+            // Reset line strokes states
+            const lines = intro.querySelectorAll('path');
+            lines.forEach(l => {
+                const isFast = l.classList.contains('sketch-line-fast');
+                l.style.animation = 'none';
+                l.offsetHeight; // force reflow
+                l.style.animation = isFast ? 'drawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s' : 'drawLine 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+            });
+
+            intro.classList.remove('hidden', 'opacity-0');
+            setTimeout(() => {
+                intro.classList.add('opacity-0');
+                const app = document.getElementById('main-app');
+                app.classList.remove('hidden');
+                setTimeout(() => { app.classList.add('opacity-100'); intro.classList.add('hidden'); if(callback) callback(); }, 50);
+            }, 2600);
         }
 
         function promptAdminLogin() {
@@ -338,10 +356,9 @@
             grid.innerHTML = '';
             const now = new Date().getTime();
             
-            const liveDurationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); // 2h 5.5m
+            const liveDurationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); 
             const totalRemovalLimitMs = (2 * 60 * 60 * 1000) + (20 * 60 * 1000); // 2h 20m Hard Drop
 
-            // Determine which match is currently highlighted on the primary card spotlight
             const currentShowcase = findCurrentShowcaseMatch(now, liveDurationLimitMs);
 
             const visibleData = data.filter(item => {
@@ -374,10 +391,11 @@
                     badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
                     badgeText = "UPCOMING";
                     
-                    // If it is upcoming but NOT yet on the big active countdown spotlight board, lock it down
                     if (!currentShowcase || currentShowcase.id !== item.id) {
                         btnText = "Pre-Match Coverage Locked";
                         btnDisabled = true;
+                    } else {
+                        btnText = "Watch Pre-Match Coverage ↗";
                     }
                 } else {
                     badgeClass = "bg-slate-950 text-slate-500 border border-slate-800";
@@ -409,7 +427,9 @@
                 `;
                 
                 if (!btnDisabled) {
-                    card.querySelector('button').onclick = () => { bootMatchPlayer(item.url, item.title); };
+                    card.querySelector('button').onclick = () => { 
+                        bootMatchPlayerWithAnimation(item.url, item.title);
+                    };
                 }
                 grid.appendChild(card);
             });
@@ -422,8 +442,8 @@
             let isLiveCurrently = false;
             let formattedStreamRuntime = "00:00:00";
             
-            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); // 2 Hours 5.5 Minutes Max
-            const totalRemovalLimitMs = (2 * 60 * 60 * 1000) + (20 * 60 * 1000); // 2 Hours 20 Minutes Max
+            const durationLimitMs = (2 * 60 * 60 * 1000) + (5 * 60 * 1000) + (30 * 1000); 
+            const totalRemovalLimitMs = (2 * 60 * 60 * 1000) + (20 * 60 * 1000); 
 
             for (let i = 0; i < cachedMatchesStore.length; i++) {
                 const mTime = new Date(cachedMatchesStore[i].start_time).getTime();
@@ -475,7 +495,7 @@
                 const actionBtn = document.getElementById('stage-launch-btn');
                 const formattedKickoff = new Date(displayTargetMatch.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                actionBtn.onclick = () => { bootMatchPlayer(displayTargetMatch.url, displayTargetMatch.title); };
+                actionBtn.onclick = () => { bootMatchPlayerWithAnimation(displayTargetMatch.url, displayTargetMatch.title); };
 
                 if (isLiveCurrently) {
                     badgePill.className = "font-bold tracking-widest text-[9px] uppercase bg-red-500/10 border border-red-500/20 text-red-400 px-3.5 py-1.5 rounded-xl flex items-center gap-2 live-pulse";
@@ -521,7 +541,6 @@
                     }
                 }
             }
-            // Continuous alignment for matrix action items state updates
             renderUnifiedStudioMatrixPanel(cachedMatchesStore);
         }
 
@@ -571,6 +590,13 @@
                 });
                 if (res.ok) syncScheduleStore();
             } catch (err) { alert("Failed."); }
+        }
+
+        // Intercept play action with Mbappe victory sketch lines drawing effect sequence
+        function bootMatchPlayerWithAnimation(url, title) {
+            triggerLineArtOverlay("Connecting HLS Studio Node...", () => {
+                bootMatchPlayer(url, title);
+            });
         }
 
         function bootMatchPlayer(url, title) {
